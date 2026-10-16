@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: optiwise-web-image-inspector
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true

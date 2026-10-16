@@ -31,10 +31,10 @@ const frameScript=()=>{
   const parent=e=>{let n=e;for(let i=0;i<7&&n&&n!==document.body;i++,n=n.parentElement) if(isPopup(n)) return n;return null};
   const label=e=>token(e).replace(/\s+/g,' ').trim().slice(0,100)||'Popup candidate';
   const items=[],set=new Set();
-  const add=(e,kind)=>{const r=e.getBoundingClientRect(),p=parent(e),nw=e.naturalWidth||e.videoWidth||0,nh=e.naturalHeight||e.videoHeight||0;if(!visible(e)&&!p)return;if(p)set.add(p);items.push({...meta(e),kind,src:e.currentSrc||e.src||e.poster||'',renderedWidth:Math.round(r.width),renderedHeight:Math.round(r.height),naturalWidth:nw,naturalHeight:nh,visible:visible(e),popupCandidate:!!p,popupLabel:p?label(p):''})};
+  const add=(e,kind)=>{const r=e.getBoundingClientRect(),p=parent(e),nw=e.naturalWidth||e.videoWidth||0,nh=e.naturalHeight||e.videoHeight||0,src=e.currentSrc||e.src||e.poster||'';if(!src)return;if(p)set.add(p);items.push({...meta(e),kind,src,renderedWidth:Math.round(r.width),renderedHeight:Math.round(r.height),naturalWidth:nw,naturalHeight:nh,visible:visible(e),popupCandidate:!!p,popupLabel:p?label(p):''})};
   document.querySelectorAll('img').forEach(e=>add(e,'image'));
   document.querySelectorAll('video').forEach(e=>add(e,'video'));
-  document.querySelectorAll('*').forEach(e=>{const b=getComputedStyle(e).backgroundImage,m=b&&b!=='none'?b.match(/url\(["']?(.*?)["']?\)/):null,p=parent(e);if(m&&(visible(e)||p)){const r=e.getBoundingClientRect();if(p)set.add(p);items.push({...meta(e),kind:'background',src:new URL(m[1],location.href).href,renderedWidth:Math.round(r.width),renderedHeight:Math.round(r.height),naturalWidth:0,naturalHeight:0,visible:visible(e),popupCandidate:!!p,popupLabel:p?label(p):''})}});
+  document.querySelectorAll('*').forEach(e=>{const b=getComputedStyle(e).backgroundImage,m=b&&b!=='none'?b.match(/url\(["']?(.*?)["']?\)/):null,p=parent(e);if(m){const r=e.getBoundingClientRect();if(p)set.add(p);items.push({...meta(e),kind:'background',src:new URL(m[1],location.href).href,renderedWidth:Math.round(r.width),renderedHeight:Math.round(r.height),naturalWidth:0,naturalHeight:0,visible:visible(e),popupCandidate:!!p,popupLabel:p?label(p):''})}});
   const popups=[...set].map((e,i)=>{const r=e.getBoundingClientRect();return{id:i+1,label:label(e),width:Math.round(r.width),height:Math.round(r.height),visible:visible(e)}});
   return {items,popups};
 };

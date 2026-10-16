@@ -60,7 +60,8 @@ app.post('/api/scan',async(req,res)=>{
       try{const d=await f.evaluate(frameScript);d.items.forEach(x=>items.push({...x,frameUrl:f.url()}));d.popups.forEach(x=>popups.push({...x,frameUrl:f.url()}))}catch(_){ }
     }
     const unique=popups.filter((p,i,a)=>i===a.findIndex(x=>x.frameUrl===p.frameUrl&&x.label===p.label&&x.width===p.width&&x.height===p.height));
-    res.json({title:await page.title(),url,viewport:{width,height},items,popups:unique});
+    const screenshot=await page.screenshot({type:'jpeg',quality:62});
+    res.json({title:await page.title(),url,viewport:{width,height},screenshot:`data:image/jpeg;base64,${screenshot.toString('base64')}`,items,popups:unique});
   }catch(e){res.status(400).json({error:e.message||'ไม่สามารถตรวจสอบเว็บไซต์นี้ได้'})}
   finally{if(browser) await browser.close()}
 });

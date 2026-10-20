@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Image Size Inspector",
+  "version": "1.0.3",
+  "description": "ชี้รูปบนหน้าเว็บเพื่อดูขนาดต้นฉบับ ขนาดที่แสดงจริง Ratio และประเภทไฟล์",
+  "permissions": ["activeTab", "scripting"],
+  "icons": {
+    "16": "icons/owl-16.png",
+    "32": "icons/owl-32.png",
+    "48": "icons/owl-48.png",
+    "128": "icons/owl-128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/owl-16.png",
+      "32": "icons/owl-32.png",
+      "48": "icons/owl-48.png",
+      "128": "icons/owl-128.png"
+    },
+    "default_title": "Inspect image sizes on this page",
+    "default_popup": "popup.html"
+  }
+}

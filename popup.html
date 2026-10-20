@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Image Size Inspector</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <main class="popup">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <img src="icons/owl-48.png" alt="">
+        </div>
+        <div>
+          <div class="eyebrow">OPTIWISE TOOL</div>
+          <h1>Image Size</h1>
+        </div>
+      </div>
+
+      <button id="scanButton" class="toggle" type="button" aria-pressed="false" aria-label="Image Size: OFF">
+        <span class="toggle-track" aria-hidden="true"><span class="toggle-knob"></span></span>
+        <span id="toggleLabel" class="toggle-state">OFF</span>
+      </button>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -1,72 +1,224 @@
-const express=require('express');
-const dns=require('dns').promises;
-const net=require('net');
-const {chromium}=require('playwright');
+const express = require('express');
+const dns = require('dns').promises;
+const net = require('net');
+const { chromium } = require('playwright');
 
-const app=express();
-const port=process.env.PORT||10000;
-app.use(express.json({limit:'20kb'}));
+const app = express();
+const port = process.env.PORT || 10000;
+const corsOrigins = String(process.env.CORS_ORIGINS || '*')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use((req, res, next) => {
+  const requestOrigin = req.headers.origin;
+  const allowAll = corsOrigins.includes('*');
+  const allowed = allowAll || !requestOrigin || corsOrigins.includes(requestOrigin);
+  if (allowed) {
+    res.setHeader('Access-Control-Allow-Origin', allowAll ? '*' : (requestOrigin || corsOrigins[0] || '*'));
+    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
+
+app.use(express.json({ limit: '20kb' }));
 app.use(express.static(__dirname));
-let browserPromise=null;
-const getBrowser=async()=>{if(!browserPromise)browserPromise=chromium.launch({headless:true,args:['--no-sandbox']}).catch(error=>{browserPromise=null;throw error});return browserPromise};
 
-function privateIp(ip){
-  if(net.isIPv4(ip)) return ip==='127.0.0.1'||ip==='0.0.0.0'||ip.startsWith('10.')||ip.startsWith('192.168.')||(ip.startsWith('172.')&&Number(ip.split('.')[1])>=16&&Number(ip.split('.')[1])<=31);
-  if(net.isIPv6(ip)) return ip==='::1'||ip.startsWith('fc')||ip.startsWith('fd')||ip.startsWith('fe80:');
+let browserPromise = null;
+const getBrowser = async () => {
+  if (!browserPromise) {
+    browserPromise = chromium.launch({ headless: true, args: ['--no-sandbox'] })
+      .catch((error) => { browserPromise = null; throw error; });
+  }
+  return browserPromise;
+};
+
+function privateIp(ip) {
+  if (net.isIPv4(ip)) {
+    return ip === '127.0.0.1' || ip === '0.0.0.0' || ip.startsWith('10.') ||
+      ip.startsWith('192.168.') || (ip.startsWith('172.') && Number(ip.split('.')[1]) >= 16 && Number(ip.split('.')[1]) <= 31);
+  }
+  if (net.isIPv6(ip)) return ip === '::1' || ip.startsWith('fc') || ip.startsWith('fd') || ip.startsWith('fe80:');
   return false;
 }
 
-async function safePublicUrl(raw){
-  let u;
-  try{u=new URL(raw)}catch{throw new Error('URL ไม่ถูกต้อง')}
-  if(!['http:','https:'].includes(u.protocol)) throw new Error('รองรับเฉพาะ http:// หรือ https://');
-  const addresses=await dns.lookup(u.hostname,{all:true});
-  if(addresses.some(x=>privateIp(x.address))) throw new Error('ไม่อนุญาตให้ตรวจ URL ภายในระบบหรือ localhost');
-  return u.toString();
+async function safePublicUrl(raw) {
+  let url;
+  try { url = new URL(raw); } catch { throw new Error('URL ไม่ถูกต้อง'); }
+  if (!['http:', 'https:'].includes(url.protocol)) throw new Error('รองรับเฉพาะ http:// หรือ https://');
+  const addresses = await dns.lookup(url.hostname, { all: true });
+  if (addresses.some(({ address }) => privateIp(address))) throw new Error('ไม่อนุญาตให้ตรวจ URL ภายในระบบหรือ localhost');
+  return url.toString();
 }
 
-const frameScript=()=>{
-  const visible=e=>{const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)!==0};
-  const token=e=>[e.id,typeof e.className==='string'?e.className:'',e.getAttribute('role')||'',e.getAttribute('aria-label')||'',e.getAttribute('data-testid')||''].join(' ').toLowerCase();
-  const meta=e=>{const parts=[];let n=e;for(let i=0;i<6&&n&&n!==document.body;i++,n=n.parentElement)parts.push(token(n));return{token:parts.join(' '),alt:e.getAttribute('alt')||'',id:e.id||'',className:typeof e.className==='string'?e.className:'',link:e.closest('a')?.href||''}};
-  const source=e=>{const set=e.getAttribute('srcset')||e.getAttribute('data-srcset')||'';const setUrls=set.split(',').map(x=>x.trim().split(/\s+/)[0]).filter(Boolean);const values=[e.getAttribute('data-src'),e.getAttribute('data-lazy-src'),e.getAttribute('data-original'),e.getAttribute('data-url'),e.currentSrc,e.getAttribute('src'),e.poster,...setUrls].filter(Boolean);return values.find(x=>!x.startsWith('data:image/')&&x!=='about:blank')||values[0]||''};
-  const isPopup=e=>{const t=token(e),s=getComputedStyle(e),r=e.getBoundingClientRect(),z=parseInt(s.zIndex)||0;return /(popup|modal|dialog|lightbox|newsletter|cookie|consent|overlay|subscribe|announcement)/i.test(t)||(s.position==='fixed'&&z>=100&&r.width>250&&r.height>100)};
-  const parent=e=>{let n=e;for(let i=0;i<7&&n&&n!==document.body;i++,n=n.parentElement) if(isPopup(n)) return n;return null};
-  const label=e=>token(e).replace(/\s+/g,' ').trim().slice(0,100)||'Popup candidate';
-  const items=[],set=new Set();
-  const add=(e,kind)=>{const r=e.getBoundingClientRect(),p=parent(e),nw=e.naturalWidth||e.videoWidth||0,nh=e.naturalHeight||e.videoHeight||0,src=source(e);if(!src)return;if(p)set.add(p);items.push({...meta(e),kind,src,renderedWidth:Math.round(r.width),renderedHeight:Math.round(r.height),naturalWidth:nw,naturalHeight:nh,visible:visible(e),popupCandidate:!!p,popupLabel:p?label(p):''})};
-  document.querySelectorAll('img').forEach(e=>add(e,'image'));
-  document.querySelectorAll('video').forEach(e=>add(e,'video'));
-  document.querySelectorAll('[class],[id],[style],header,main,section,footer,nav,article').forEach(e=>{const r=e.getBoundingClientRect();if(!r.width&&!r.height)return;const b=getComputedStyle(e).backgroundImage,m=b&&b!=='none'?b.match(/url\(["']?(.*?)["']?\)/):null,p=parent(e);if(m){if(p)set.add(p);items.push({...meta(e),kind:'background',src:new URL(m[1],location.href).href,renderedWidth:Math.round(r.width),renderedHeight:Math.round(r.height),naturalWidth:0,naturalHeight:0,visible:visible(e),popupCandidate:!!p,popupLabel:p?label(p):''})}});
-  const popups=[...set].map((e,i)=>{const r=e.getBoundingClientRect();return{id:i+1,label:label(e),width:Math.round(r.width),height:Math.round(r.height),visible:visible(e)}});
-  return {items,popups};
+// Runs inside the target page. Only real <img> and <video> elements are collected.
+// CSS background-image is deliberately excluded from the report.
+const frameScript = () => {
+  const visible = (element) => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return rect.width >= 12 && rect.height >= 12 && style.display !== 'none' &&
+      style.visibility !== 'hidden' && Number(style.opacity || 1) > 0;
+  };
+
+  const token = (element) => [
+    element.id,
+    typeof element.className === 'string' ? element.className : '',
+    element.getAttribute('role') || '',
+    element.getAttribute('aria-label') || '',
+    element.getAttribute('data-testid') || ''
+  ].join(' ').toLowerCase();
+
+  const meta = (element) => ({
+    token: token(element),
+    alt: element.getAttribute('alt') || '',
+    id: element.id || '',
+    className: typeof element.className === 'string' ? element.className : '',
+    link: element.closest('a')?.href || ''
+  });
+
+  const source = (element) => {
+    // currentSrc is the responsive asset actually selected by the browser.
+    const candidates = [
+      element.currentSrc,
+      element.getAttribute('src'),
+      element.querySelector?.('source[src]')?.src,
+      element.getAttribute('data-src'),
+      element.getAttribute('data-lazy-src'),
+      element.getAttribute('data-original'),
+      element.getAttribute('data-url')
+    ].filter(Boolean);
+    return candidates.find((value) => !String(value).startsWith('data:image/')) || '';
+  };
+
+  const popupParent = (element) => {
+    let current = element;
+    for (let i = 0; current && i < 7 && current !== document.body; i += 1, current = current.parentElement) {
+      const rect = current.getBoundingClientRect();
+      const style = getComputedStyle(current);
+      const text = token(current);
+      const zIndex = Number.parseInt(style.zIndex, 10) || 0;
+      if (/popup|modal|dialog|lightbox|newsletter|cookie|consent|overlay|subscribe|announcement/i.test(text) ||
+        (style.position === 'fixed' && zIndex >= 100 && rect.width > 250 && rect.height > 100)) return current;
+    }
+    return null;
+  };
+
+  const section = (element) => {
+    const chain = [];
+    let current = element;
+    for (let i = 0; current && i < 6; i += 1, current = current.parentElement) chain.push(token(current));
+    const text = chain.join(' ');
+    if (/popup|modal|dialog|overlay|cookie|consent|lightbox/.test(text)) return 'Overlay / Dialog';
+    if (/header|navbar|navigation|menu|logo/.test(text)) return 'Header / Navigation';
+    if (/hero|banner|masthead|carousel|slider|spotlight|home[-_ ]?visual/.test(text)) return 'Banner';
+    if (/news|article|press|event|content|blog|media/.test(text)) return 'News / Content';
+    if (/gallery|portfolio|product|card|thumbnail|project/.test(text)) return 'Gallery / Portfolio';
+    return 'Other images';
+  };
+
+  const extension = (value) => {
+    try {
+      const path = new URL(value, location.href).pathname.toLowerCase();
+      return path.match(/\.([a-z0-9]{2,5})$/)?.[1]?.toUpperCase() || '';
+    } catch { return ''; }
+  };
+
+  const items = [];
+  const elements = new Set();
+  const add = (element, kind) => {
+    if (elements.has(element) || !visible(element)) return;
+    const rect = element.getBoundingClientRect();
+    const src = source(element);
+    if (!src) return;
+    const popup = popupParent(element);
+    const absolute = new URL(src, location.href).href;
+    elements.add(element);
+    items.push({
+      ...meta(element),
+      kind,
+      src: absolute,
+      previewSrc: kind === 'video' ? (element.poster ? new URL(element.poster, location.href).href : absolute) : absolute,
+      fileType: kind === 'video' ? 'VIDEO' : extension(absolute) || 'IMAGE',
+      section: section(element),
+      renderedWidth: Math.round(rect.width),
+      renderedHeight: Math.round(rect.height),
+      naturalWidth: kind === 'video' ? (element.videoWidth || 0) : (element.naturalWidth || 0),
+      naturalHeight: kind === 'video' ? (element.videoHeight || 0) : (element.naturalHeight || 0),
+      visible: true,
+      popupCandidate: Boolean(popup)
+    });
+  };
+
+  document.querySelectorAll('img').forEach((element) => add(element, 'image'));
+  document.querySelectorAll('video').forEach((element) => add(element, 'video'));
+  items.sort((a, b) => a.renderedWidth * a.renderedHeight - b.renderedWidth * b.renderedHeight);
+  items.forEach((item, index) => { item.index = index + 1; });
+  return { items };
 };
 
-app.post('/api/scan',async(req,res)=>{
+const hoverCandidates = () => [...document.querySelectorAll('a,button,[role="button"],[tabindex],.swiper-slide,.slick-slide')]
+  .map((element) => {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2, width: rect.width, height: rect.height, visible: rect.width > 20 && rect.height > 20 && style.display !== 'none' && style.visibility !== 'hidden' };
+  })
+  .filter((item) => item.visible)
+  .sort((a, b) => b.width * b.height - a.width * a.height)
+  .slice(0, 18);
+
+app.post('/api/scan', async (req, res) => {
   let context;
-  try{
-    const url=await safePublicUrl(String(req.body?.url||'').slice(0,2000));
-    const width=Math.max(320,Math.min(2400,Number(req.body?.viewport?.width)||1920));
-    const height=Math.max(480,Math.min(1800,Number(req.body?.viewport?.height)||1080));
-    const browser=await getBrowser();
-    context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1});
-    const page=await context.newPage();
-    await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000});
-    await page.waitForTimeout(1800);
-    await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight)).catch(()=>{});
-    await page.waitForTimeout(500);
-    await page.evaluate(()=>window.scrollTo(0,0)).catch(()=>{});
-    await page.waitForTimeout(200);
-    const items=[],popups=[];
-    for(const f of page.frames()){
-      try{const d=await f.evaluate(frameScript);d.items.forEach(x=>items.push({...x,frameUrl:f.url()}));d.popups.forEach(x=>popups.push({...x,frameUrl:f.url()}))}catch(_){ }
+  try {
+    const url = await safePublicUrl(String(req.body?.url || '').slice(0, 2000));
+    const width = Math.max(320, Math.min(2400, Number(req.body?.viewport?.width) || 1920));
+    const height = Math.max(480, Math.min(1800, Number(req.body?.viewport?.height) || 1080));
+    const browser = await getBrowser();
+    context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
+    const page = await context.newPage();
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForTimeout(850);
+
+    // Scroll once to trigger lazy images, then return to the top for the report screenshot.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)).catch(() => {});
+    await page.waitForTimeout(300);
+    await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
+    await page.waitForTimeout(120);
+
+    // A short hover sweep catches carousel/hover-revealed image elements without making a full crawl.
+    const points = await page.evaluate(hoverCandidates).catch(() => []);
+    for (const point of points) {
+      await page.mouse.move(point.x, point.y).catch(() => {});
+      await page.waitForTimeout(55);
     }
-    const unique=popups.filter((p,i,a)=>i===a.findIndex(x=>x.frameUrl===p.frameUrl&&x.label===p.label&&x.width===p.width&&x.height===p.height));
-    const screenshot=await page.screenshot({type:'jpeg',quality:52});
-    res.json({title:await page.title(),url,viewport:{width,height},screenshot:`data:image/jpeg;base64,${screenshot.toString('base64')}`,items,popups:unique});
-  }catch(e){res.status(400).json({error:e.message||'ไม่สามารถตรวจสอบเว็บไซต์นี้ได้'})}
-  finally{if(context) await context.close()}
+    await page.waitForTimeout(160);
+
+    const items = [];
+    for (const frame of page.frames()) {
+      try {
+        const result = await frame.evaluate(frameScript);
+        result.items.forEach((item) => items.push({ ...item, frameUrl: frame.url() }));
+      } catch (_) { /* cross-origin or closed frame */ }
+    }
+
+    const unique = items.filter((item, index, all) => index === all.findIndex((candidate) =>
+      candidate.src === item.src && candidate.frameUrl === item.frameUrl &&
+      candidate.renderedWidth === item.renderedWidth && candidate.renderedHeight === item.renderedHeight));
+    res.json({
+      title: await page.title(),
+      url,
+      viewport: { width, height },
+      items: unique
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message || 'ไม่สามารถตรวจสอบเว็บไซต์นี้ได้' });
+  } finally {
+    if (context) await context.close();
+  }
 });
 
-app.get('/health',(_,res)=>res.json({ok:true}));
-app.listen(port,'0.0.0.0',()=>console.log(`Web Image Inspector listening on ${port}`));
+app.get('/health', (_, res) => res.json({ ok: true }));
+app.listen(port, '0.0.0.0', () => console.log(`Web Image Inspector listening on ${port}`));

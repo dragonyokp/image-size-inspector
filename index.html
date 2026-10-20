@@ -3,127 +3,219 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Optiwise Web Image Inspector</title>
+  <title>Optiwise Image Inspector</title>
   <style>
-    :root{--ink:#12231f;--muted:#6b7d77;--line:#dce8e2;--soft:#f4f8f6;--green:#18865f;--green-dark:#0d5f42;--mint:#e7f5ee;--red:#c34a42;--red-bg:#fff0ef;--amber:#a36c14;--amber-bg:#fff7e6;--shadow:0 20px 60px rgba(19,55,42,.08)}
-    *{box-sizing:border-box}body{margin:0;background:#f7faf8;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select{font:inherit}button{cursor:pointer}
-    .shell{max-width:1240px;margin:0 auto;padding:28px 24px 64px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:54px}.brand{display:flex;align-items:center;gap:12px}.logo{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--green);color:#fff;font-size:16px;font-weight:850;letter-spacing:-.05em}.eyebrow{margin:0 0 3px;color:var(--green);font-size:11px;font-weight:800;letter-spacing:.16em}.brand-name{font-size:18px;font-weight:780;letter-spacing:-.02em}.top-note{color:var(--muted);font-size:13px}
-    .hero{max-width:900px;margin-bottom:27px}h1{margin:0;font-size:clamp(34px,5vw,57px);line-height:1.03;letter-spacing:-.06em}.hero p{margin:16px 0 0;color:var(--muted);font-size:17px;line-height:1.65}
-    .scan-card{padding:22px;border:1px solid var(--line);border-radius:22px;background:#fff;box-shadow:var(--shadow)}.scan-row{display:grid;grid-template-columns:minmax(0,1.55fr) 220px 220px 130px;gap:10px;align-items:end}.field-label{display:block;margin:0 0 9px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#38534a}input,select{width:100%;height:50px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);padding:0 15px;outline:none;transition:border-color .18s,box-shadow .18s}input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 4px rgba(24,134,95,.12)}.primary{height:50px;border:0;border-radius:12px;background:var(--green);color:#fff;font-weight:800;transition:background .18s,transform .18s}.primary:hover{background:var(--green-dark);transform:translateY(-1px)}.primary:disabled{cursor:wait;opacity:.7;transform:none}.hint{margin:12px 0 0;color:var(--muted);font-size:12px}.status{display:none;margin-top:14px;padding:12px 14px;border-radius:12px;font-size:13px;line-height:1.5}.status.show{display:block;background:var(--mint);color:var(--green-dark)}.status.error{display:block;background:var(--red-bg);color:var(--red)}
-    .results{display:none;margin-top:46px}.results.show{display:block}.results-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:20px}.results-title{margin:0;font-size:26px;letter-spacing:-.04em}.results-meta{margin:6px 0 0;color:var(--muted);font-size:13px;word-break:break-all}.actions{display:flex;align-items:center;gap:8px}.secondary{height:40px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--green-dark);font-size:13px;font-weight:750;white-space:nowrap}.secondary:hover{border-color:var(--green);background:var(--soft)}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:21px}.summary-card{padding:15px 17px;border:1px solid var(--line);border-radius:15px;background:#fff}.summary-label{display:block;color:var(--muted);font-size:11px}.summary-value{display:block;margin-top:4px;font-size:23px;letter-spacing:-.04em}.summary-card.pass .summary-value{color:var(--green)}.summary-card.fail .summary-value{color:var(--red)}.summary-card.review .summary-value{color:var(--amber)}
-    .report-head{display:none}.spec-reference{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 20px;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--muted);font-size:12px}.spec-reference strong{color:var(--ink)}.spec-pill{padding:5px 8px;border-radius:7px;background:var(--soft);color:var(--green-dark);font-weight:750}.results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.asset-card{display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:0 8px 28px rgba(19,55,42,.05)}.asset-preview{height:280px;flex:0 0 280px;padding:14px;background:linear-gradient(135deg,#f4f8f6,#edf4f0);display:grid;place-items:center}.asset-preview img,.asset-preview video{display:block;width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}.asset-preview .broken{width:100%;height:100%;display:grid;place-items:center;border:1px dashed #cbdcd4;border-radius:10px;color:var(--muted);font-size:13px}.asset-body{position:relative;z-index:1;flex:1;padding:16px 17px 17px;background:#fff}.asset-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}.asset-type{display:block;color:var(--green);font-size:11px;font-weight:850;letter-spacing:.07em;text-transform:uppercase}.asset-source{margin:4px 0 0;color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:430px}.badge{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap}.badge.pass{background:var(--mint);color:var(--green-dark)}.badge.fail{background:var(--red-bg);color:var(--red)}.badge.review{background:var(--amber-bg);color:var(--amber)}.asset-data{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 15px}.data-label{display:block;margin-bottom:4px;color:var(--muted);font-size:11px}.data-value{display:block;font-size:14px;font-weight:800;letter-spacing:-.01em;overflow-wrap:anywhere}.asset-reason{margin:14px 0 0;padding-top:12px;border-top:1px solid #edf2ef;color:var(--muted);font-size:12px;line-height:1.5}.asset-reason strong{color:var(--ink)}.empty{grid-column:1/-1;padding:54px 24px;border:1px dashed #cbdcd4;border-radius:18px;background:#fff;text-align:center;color:var(--muted)}.empty strong{display:block;margin-bottom:6px;color:var(--ink);font-size:16px}.loading{display:inline-flex;align-items:center;gap:8px}.spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:spin .75s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-    .results-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
-    @media(max-width:1050px){.scan-row{grid-template-columns:minmax(0,1fr) 210px 190px 120px}.results-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:800px){.scan-row{grid-template-columns:1fr 1fr}.scan-row>div:first-child{grid-column:1/-1}.primary{width:100%}.results-grid{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,1fr)}}
-    /* Keep report data on an opaque layer below the image. */
-    /* The company spec is selected automatically from the URL, so keep that control out of the user flow. */
-    .scan-row{grid-template-columns:minmax(0,1fr) 220px 130px}
-    .scan-row>div:nth-child(2){display:none}
-    @media(max-width:1050px){.scan-row{grid-template-columns:minmax(0,1fr) 210px 120px}}
-    @media(max-width:650px){.scan-row{grid-template-columns:1fr}}
-    .asset-preview{overflow:hidden}
-    .asset-body{position:relative;z-index:3;background:#fff;isolation:isolate}
-    .asset-data{position:relative;z-index:4;grid-template-columns:repeat(4,minmax(0,1fr));padding:0;background:#fff}
-    .asset-reason{display:none}
-    .summary,.spec-reference{display:none}
-    @media(max-width:650px){.shell{padding:20px 15px 42px}.topbar{margin-bottom:38px}.top-note{display:none}.hero p{font-size:15px}.scan-card{padding:16px;border-radius:17px}.scan-row{grid-template-columns:1fr}.scan-row>div:first-child{grid-column:auto}.primary{width:100%}.results-head{align-items:flex-start;flex-direction:column}.actions{width:100%}.actions button{flex:1}.asset-preview{height:250px;flex-basis:250px}.asset-data{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px 9px}.data-value{font-size:12px}}
-    @media print{body{background:#fff}.shell{max-width:none;padding:0}.topbar,.hero,.scan-card,.results-head .actions,.spec-reference{display:none!important}.results{display:block!important;margin-top:0}.report-head{display:block;padding-bottom:16px;margin-bottom:18px;border-bottom:2px solid #12231f}.report-head h1{font-size:27px;letter-spacing:-.04em}.report-head p{margin:5px 0 0;color:#52645d;font-size:11px}.summary{gap:8px;margin-bottom:16px}.summary-card{box-shadow:none;padding:10px}.summary-value{font-size:18px}.results-grid{grid-template-columns:repeat(2,1fr);gap:10px}.asset-card{box-shadow:none;break-inside:avoid}.asset-preview{height:155px;padding:8px}.asset-body{padding:10px}.asset-source{max-width:260px}.asset-reason{margin-top:8px;padding-top:8px;font-size:10px}.data-label{font-size:9px}.data-value{font-size:11px}.badge{font-size:9px;padding:4px 7px}}
-    /* Optiwise CI refresh: white canvas, Optiwise blue actions, green support accent. */
-    :root{--ink:#111111;--muted:#65717f;--line:#e3e8f0;--soft:#f4f7ff;--green:#207b4f;--green-dark:#155b3a;--mint:#eaf7f0;--blue:#2d63e8;--blue-dark:#1d4fc7;--blue-soft:#edf3ff;--red:#c94b50;--red-bg:#fff1f2;--amber:#a66a13;--amber-bg:#fff7e8;--shadow:0 18px 50px rgba(34,67,128,.09)}
-    body{background:#fff;color:var(--ink);font-family:Arial,"Noto Sans Thai",Inter,ui-sans-serif,sans-serif}
-    .shell{max-width:1280px;padding:24px 30px 70px}
-    .topbar{margin-bottom:60px;padding:0 0 18px;border-bottom:1px solid #edf0f5}
-    .logo{width:44px;height:44px;border-radius:50%;background:var(--blue);font-size:15px;box-shadow:0 7px 18px rgba(45,99,232,.22)}
-    .eyebrow{color:var(--blue);letter-spacing:.18em}
-    .brand-name{color:#101010;font-size:19px}
-    .top-note{color:#788394}
-    .hero{max-width:1000px;margin-bottom:32px}
-    h1{font-weight:800;letter-spacing:-.065em}
-    .hero p{max-width:840px;color:#687485}
-    .scan-card{border-color:#dfe6f1;border-radius:20px;box-shadow:var(--shadow)}
-    .field-label{color:#25364d}
-    input,select{border-color:#dbe3ef;border-radius:11px}
-    input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(45,99,232,.12)}
-    .primary{background:var(--blue);border-radius:11px;box-shadow:0 8px 16px rgba(45,99,232,.18)}
-    .primary:hover{background:var(--blue-dark)}
-    .hint{color:#7b8796}
-    .status.show{background:var(--mint);color:var(--green-dark)}
-    .results{margin-top:50px}
-    .results-title{font-weight:800;letter-spacing:-.045em}
-    .results-meta{color:#758092}
-    .secondary{border-color:#d7e1f0;color:var(--blue-dark);border-radius:11px}
-    .secondary:hover{border-color:#a9bfee;background:var(--blue-soft)}
-    .asset-card{border-color:#e0e6ef;border-radius:17px;box-shadow:0 10px 30px rgba(37,65,116,.07)}
-    .asset-preview{background:linear-gradient(135deg,#f7f9fd,#eef3ff)}
-    .asset-body{border-top:1px solid #edf0f5}
-    .data-label{color:#7a8695}
-    .data-value{color:#111827}
-    .empty{border-color:#cfdcf1;background:#fbfcff}
-    @media(max-width:650px){.shell{padding-left:16px;padding-right:16px}.topbar{margin-bottom:40px}.hero p{font-size:15px}}
-    /* Section-based report layout. */
-    .results-grid{display:block}
-    .section-group{margin:0 0 28px;padding:20px;border:1px solid #e0e6ef;border-radius:18px;background:#fff;box-shadow:0 8px 24px rgba(37,65,116,.045)}
-    .section-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:17px;padding-bottom:14px;border-bottom:1px solid #edf0f5}
-    .section-kicker{display:block;margin-bottom:4px;color:var(--blue);font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
-    .section-title{margin:0;color:var(--ink);font-size:20px;letter-spacing:-.035em}
-    .section-count{padding:6px 10px;border-radius:999px;background:var(--blue-soft);color:var(--blue-dark);font-size:12px;font-weight:800;white-space:nowrap}
-    .section-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
-    @media(max-width:1050px){.section-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:800px){.section-group{padding:15px}.section-grid{grid-template-columns:1fr}}
-    @media print{.section-group{break-inside:avoid;box-shadow:none;padding:12px;margin-bottom:14px}.section-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.section-heading{margin-bottom:10px;padding-bottom:8px}.section-title{font-size:16px}}
-    .section-preview{margin:0 0 18px;border:1px solid #dfe6f0;border-radius:13px;overflow:hidden;background:#f7f9fd}
-    .section-preview img{display:block;width:100%;max-height:500px;object-fit:cover;object-position:top center}
-    @media print{.section-preview{margin-bottom:10px}.section-preview img{max-height:320px}}
+    :root {
+      --ink: #111827;
+      --muted: #65717f;
+      --line: #dfe6ef;
+      --blue: #3159d9;
+      --blue-dark: #17389c;
+      --blue-soft: #eef3ff;
+      --green: #238a62;
+      --canvas: #f7faf9;
+      --shadow: 0 18px 46px rgba(34, 67, 128, .08);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--canvas); font-family: Arial, "Noto Sans Thai", sans-serif; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .shell { max-width: 1280px; margin: 0 auto; padding: 24px 30px 70px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 62px; padding-bottom: 18px; border-bottom: 1px solid #e9eef4; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: #fff; background: var(--blue); box-shadow: 0 7px 18px rgba(49, 89, 217, .22); font-size: 15px; font-weight: 800; }
+    .eyebrow { margin: 0 0 3px; color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+    .brand-name { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+    .top-note { color: var(--muted); font-size: 13px; }
+    .hero { max-width: 900px; margin-bottom: 30px; }
+    h1 { margin: 0; font-size: clamp(36px, 5vw, 58px); line-height: 1.02; letter-spacing: -.065em; }
+    .hero p { max-width: 820px; margin: 16px 0 0; color: var(--muted); font-size: 17px; line-height: 1.6; }
+    .scan-card { padding: 22px; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: var(--shadow); }
+    .scan-row { display: grid; grid-template-columns: minmax(0, 1fr) 220px 130px; gap: 10px; align-items: end; }
+    .field-label { display: block; margin: 0 0 9px; color: #25364d; font-size: 12px; font-weight: 800; letter-spacing: .04em; }
+    input, select { width: 100%; height: 50px; padding: 0 15px; border: 1px solid #dbe3ef; border-radius: 11px; outline: none; color: var(--ink); background: #fff; transition: border-color .16s, box-shadow .16s; }
+    input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(49, 89, 217, .12); }
+    .primary { height: 50px; border: 0; border-radius: 11px; color: #fff; background: var(--blue); box-shadow: 0 8px 16px rgba(49, 89, 217, .18); font-weight: 800; transition: background .16s, transform .16s; }
+    .primary:hover { background: var(--blue-dark); transform: translateY(-1px); }
+    .primary:disabled { cursor: wait; opacity: .7; transform: none; }
+    .hint { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .status { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 12px; color: var(--green); background: #eaf7f0; font-size: 13px; line-height: 1.5; }
+    .status.show, .status.error { display: block; }
+    .status.error { color: #b43939; background: #fff1f2; }
+    .results { display: none; margin-top: 50px; }
+    .results.show { display: block; }
+    .results-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+    .results-title { margin: 0; font-size: 28px; letter-spacing: -.045em; }
+    .results-meta { margin: 6px 0 0; color: var(--muted); font-size: 13px; word-break: break-word; }
+    .actions { display: flex; align-items: center; gap: 8px; }
+    .secondary { height: 40px; padding: 0 14px; border: 1px solid #d7e1f0; border-radius: 11px; color: var(--blue-dark); background: #fff; font-size: 13px; font-weight: 750; white-space: nowrap; }
+    .secondary:hover { border-color: #a9bfee; background: var(--blue-soft); }
+    .summary { display: grid; grid-template-columns: minmax(180px, 260px); margin-bottom: 24px; }
+    .summary-card { padding: 15px 17px; border: 1px solid var(--line); border-radius: 15px; background: #fff; }
+    .summary-label { display: block; color: var(--muted); font-size: 11px; }
+    .summary-value { display: block; margin-top: 4px; color: var(--ink); font-size: 25px; letter-spacing: -.04em; }
+    .results-grid { display: block; }
+    .section-group { margin: 0 0 28px; padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: #fff; box-shadow: 0 8px 24px rgba(37, 65, 116, .045); }
+    .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 17px; padding-bottom: 14px; border-bottom: 1px solid #edf0f5; }
+    .section-kicker { display: block; margin-bottom: 4px; color: var(--blue); font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .section-title { margin: 0; font-size: 20px; letter-spacing: -.035em; }
+    .section-count { padding: 6px 10px; border-radius: 999px; color: var(--blue-dark); background: var(--blue-soft); font-size: 12px; font-weight: 800; white-space: nowrap; }
+    .section-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+    .asset-card { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 17px; background: #fff; box-shadow: 0 10px 30px rgba(37, 65, 116, .07); transition: transform .18s, box-shadow .18s; }
+    .asset-card:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(37, 65, 116, .12); }
+    .asset-preview { display: grid; place-items: center; height: 250px; padding: 12px; overflow: hidden; background: linear-gradient(135deg, #f7f9fd, #eef3ff); }
+    .asset-preview img, .asset-preview video { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; border-radius: 9px; object-fit: contain; }
+    .asset-preview .broken { display: grid; place-items: center; width: 100%; height: 100%; border: 1px dashed #c6d5ec; border-radius: 9px; color: var(--muted); font-size: 13px; }
+    .asset-body { padding: 16px 17px 17px; border-top: 1px solid #edf0f5; background: #fff; }
+    .asset-data { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .data-label { display: block; margin-bottom: 5px; color: var(--muted); font-size: 11px; line-height: 1.3; }
+    .data-value { display: block; color: var(--ink); font-size: 13px; font-weight: 800; line-height: 1.35; overflow-wrap: anywhere; }
+    .empty { padding: 54px 24px; border: 1px dashed #c6d5ec; border-radius: 18px; color: var(--muted); background: #fff; text-align: center; }
+    .empty strong { display: block; margin-bottom: 6px; color: var(--ink); font-size: 16px; }
+    .loading { display: inline-flex; align-items: center; gap: 8px; }
+    .spinner { width: 15px; height: 15px; border: 2px solid rgba(255, 255, 255, .45); border-top-color: #fff; border-radius: 50%; animation: spin .75s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 1050px) { .section-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 800px) { .scan-row { grid-template-columns: 1fr 1fr; } .scan-row > div:first-child { grid-column: 1 / -1; } .section-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 650px) { .shell { padding: 20px 16px 44px; } .topbar { margin-bottom: 40px; } .top-note { display: none; } .hero p { font-size: 15px; } .scan-card { padding: 16px; } .scan-row { grid-template-columns: 1fr; } .scan-row > div:first-child { grid-column: auto; } .primary { width: 100%; } .results-head { align-items: flex-start; flex-direction: column; } .actions { width: 100%; } .actions button { flex: 1; } .section-group { padding: 15px; } .asset-preview { height: 220px; } .asset-data { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 9px; } }
+    @media print { body { background: #fff; } .shell { max-width: none; padding: 0; } .topbar, .hero, .scan-card, .results-head .actions { display: none !important; } .results { display: block !important; margin-top: 0; } .results-title { font-size: 25px; } .results-meta { margin-bottom: 16px; } .summary { margin-bottom: 16px; } .section-group { break-inside: avoid; padding: 12px; margin-bottom: 14px; box-shadow: none; } .section-heading { margin-bottom: 10px; padding-bottom: 8px; } .section-title { font-size: 16px; } .section-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } .asset-card { break-inside: avoid; box-shadow: none; } .asset-preview { height: 155px; padding: 8px; } .asset-body { padding: 10px; } .data-label { font-size: 9px; } .data-value { font-size: 11px; } }
   </style>
 </head>
 <body>
   <main class="shell">
-    <header class="topbar"><div class="brand"><div class="logo">IS</div><div><p class="eyebrow">OPTIWISE TOOL</p><div class="brand-name">Web Image Inspector</div></div></div><div class="top-note">Image QA · Client report</div></header>
-    <section class="hero"><h1>ตรวจรูปภาพทั้งเว็บไซต์<br>พร้อมทำรายงานส่งลูกค้า</h1><p>วาง URL เว็บไซต์ แล้วระบบจะดึงรูปภาพทั้งหมดที่พบในหน้านั้น พร้อมแสดงขนาดต้นฉบับ ขนาดที่ต้องใช้ Ratio และประเภทไฟล์</p></section>
-    <section class="scan-card" aria-label="ตรวจสอบรูปภาพบนเว็บไซต์"><div class="scan-row"><div><label class="field-label" for="url">URL หน้าเว็บไซต์</label><input id="url" type="url" placeholder="https://www.example.com" value=""></div><div><label class="field-label" for="profile">มาตรฐาน Website Spec</label><select id="profile"><option value="auto">ตรวจตามโดเมนอัตโนมัติ</option></select></div><div><label class="field-label" for="viewport">ขนาดหน้าจอ</label><select id="viewport"><option value="1920x1080" selected>Desktop · 1920 × 1080</option><option value="1440x900">Desktop · 1440 × 900</option><option value="1366x768">Laptop · 1366 × 768</option><option value="1024x768">Tablet · 1024 × 768</option><option value="430x932">Mobile · 430 × 932</option><option value="390x844">Mobile Small · 390 × 844</option></select></div><button class="primary" id="scanBtn" type="button">ตรวจสอบ</button></div><p class="hint">ระบบจะตรวจรูปภาพทั้งหมดที่พบใน URL นี้ รวมถึงรูปที่อยู่ในส่วนต่าง ๆ ของหน้าเว็บ · ตรวจเฉพาะเว็บ Public</p><div class="status" id="status" role="status"></div></section>
-    <section class="results" id="results"><div class="report-head"><h1>Website Image Inspection Report</h1><p id="printMeta"></p></div><div class="results-head"><div><h2 class="results-title">ผลตรวจรูปภาพทั้งหน้าเว็บไซต์</h2><p class="results-meta" id="meta"></p></div><div class="actions"><button class="secondary" id="printBtn" type="button">Export PDF</button><button class="secondary" id="rescanBtn" type="button">ตรวจซ้ำ</button></div></div><div class="summary"><div class="summary-card"><span class="summary-label">รูปภาพที่พบ</span><strong class="summary-value" id="totalCount">0</strong></div></div><div class="spec-reference" id="specReference"></div><div class="results-grid" id="resultsGrid"></div></section>
+    <header class="topbar">
+      <div class="brand"><div class="logo">IS</div><div><p class="eyebrow">OPTIWISE TOOL</p><div class="brand-name">Image Inspector</div></div></div>
+      <div class="top-note">Image QA · Client report</div>
+    </header>
+
+    <section class="hero">
+      <h1>ตรวจรูปภาพบนเว็บไซต์<br>ได้ในครั้งเดียว</h1>
+      <p>วาง URL แล้วระบบจะอ่านรูปภาพและ Video ที่แสดงอยู่จริง พร้อมแสดงขนาดต้นฉบับ ขนาดที่ใช้ Ratio และประเภทไฟล์ เพื่อทำรายงานต่อได้ทันที</p>
+    </section>
+
+    <section class="scan-card" aria-label="ตรวจสอบรูปภาพบนเว็บไซต์">
+      <div class="scan-row">
+        <div><label class="field-label" for="url">URL หน้าเว็บไซต์</label><input id="url" type="url" placeholder="https://www.example.com" autocomplete="url"></div>
+        <div><label class="field-label" for="viewport">ขนาดหน้าจอสำหรับตรวจ</label><select id="viewport"><option value="1920x1080" selected>Desktop · 1920 × 1080</option><option value="1440x900">Desktop · 1440 × 900</option><option value="1366x768">Laptop · 1366 × 768</option><option value="1024x768">Tablet · 1024 × 768</option><option value="820x1180">iPad · 820 × 1180</option><option value="430x932">Mobile · 430 × 932</option><option value="390x844">Mobile Small · 390 × 844</option></select></div>
+        <button class="primary" id="scanBtn" type="button">ตรวจสอบ</button>
+      </div>
+      <p class="hint">ตรวจเฉพาะรูปภาพและ Video ที่แสดงอยู่จริงบนหน้าเว็บ · ไม่รวม CSS background · รองรับรูป Responsive จาก srcset</p>
+      <div class="status" id="status" role="status"></div>
+    </section>
+
+    <section class="results" id="results">
+      <div class="results-head"><div><h2 class="results-title">รายการรูปภาพที่พบ</h2><p class="results-meta" id="meta"></p></div><div class="actions"><button class="secondary" id="printBtn" type="button">Export PDF</button><button class="secondary" id="rescanBtn" type="button">ตรวจซ้ำ</button></div></div>
+      <div class="summary"><div class="summary-card"><span class="summary-label">รูปภาพที่พบ</span><strong class="summary-value" id="totalCount">0</strong></div></div>
+      <div class="results-grid" id="resultsGrid"></div>
+    </section>
   </main>
+
+  <meta name="optiwise-api-base" content="https://image-size-inspector.onrender.com">
   <script src="specs.js"></script>
   <script>
-    const $=id=>document.getElementById(id),urlInput=$('url'),profileInput=$('profile'),viewportInput=$('viewport'),scanBtn=$('scanBtn'),rescanBtn=$('rescanBtn'),printBtn=$('printBtn'),status=$('status'),results=$('results'),meta=$('meta'),printMeta=$('printMeta'),resultsGrid=$('resultsGrid'),specReference=$('specReference'),totalCount=$('totalCount'),focusCount=$('focusCount'),passCount=$('passCount'),reviewCount=$('reviewCount'),profiles=window.OPTWISE_SPECS||[];
-    const autoMap=[['assetworldcorp-th.com','AWC'],['egco.com','EGCO'],['microleasingplc.com','MICRO'],['sustainability.pttgcgroup.com','PTTGC-SD'],['pttgcgroup.com','PTTGC'],['superturtle.co.th','TURTLE'],['rabbit','RABBIT']];
-    profiles.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=`${p.name} · ${p.description}`;profileInput.appendChild(o)});
-    const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-    const size=(w,h)=>w&&h?`${w} × ${h} px`:'—';
-    const ratio=(w,h)=>w&&h?(Math.max(w,h)/Math.min(w,h)).toFixed(2)+':1':'—';
-    const bucket=w=>w<=600?'mobile':w<=1100?'tablet':'desktop';
-    const profileForUrl=raw=>{const value=raw.toLowerCase();const found=autoMap.find(([domain])=>value.includes(domain));return found?found[1]:'auto'};
-    const selectedProfile=()=>{const id=profileInput.value==='auto'?profileForUrl(urlInput.value):profileInput.value;return profiles.find(p=>p.id===id)||null};
-    function maybeAutoSelect(){if(profileInput.value==='auto'){const found=profileForUrl(urlInput.value);if(found)profileInput.title=`ตรวจพบมาตรฐาน ${found}`}}
-    function setStatus(message,type='show'){status.textContent=message;status.className=`status ${type}`}
-    function getText(item){return [item.token,item.alt,item.id,item.className,item.src].join(' ').toLowerCase()}
-    function ruleFor(item,profile){if(!profile)return null;const text=getText(item);if(item.popupCandidate){const popup=profile.rules.find(r=>r.id==='popup');if(popup)return popup}const priority=['feature','highlight','gallery','youtube','cover','home-video','video','hero','home-hero','page-banner','menu-banner','home-banner','banner','logo','content','shortcut','business'];for(const key of priority){const rule=profile.rules.find(r=>r.id===key);if(rule&&rule.match.some(word=>text.includes(word)))return rule}return profile.rules.find(r=>r.match.some(word=>text.includes(word)))||null}
-    function expectedText(rule,b){if(!rule)return 'ไม่พบประเภทในสเปก';const s=rule.sizes&&(rule.sizes[b]||rule.sizes.all||rule.sizes.desktop||rule.sizes.mobile);let parts=[];if(s)parts.push(size(s[0],s[1]));if(rule.maxWidth)parts.push(`แนวนอน ≤ ${rule.maxWidth.horizontal}px · แนวตั้ง ≤ ${rule.maxWidth.vertical}px`);if(rule.ratio)parts.push(rule.ratio);if(rule.maxFileMB)parts.push(`ไฟล์ไม่เกิน ${rule.maxFileMB} MB`);return parts.join(' · ')||'มีในรายงาน แต่ไม่มีขนาดระบุ'}
-    function extension(src){const clean=(src||'').split('?')[0].toLowerCase();const match=clean.match(/\.([a-z0-9]{2,5})$/);return match?match[1]:''}
-    function evaluate(item,rule,b){if(!rule)return{kind:'review',label:'ต้องระบุประเภท',reason:'ระบบยังระบุไม่ได้ว่าเป็น Banner หรือ Popup ประเภทใด'};const w=item.naturalWidth||item.renderedWidth,h=item.naturalHeight||item.renderedHeight;if(!w||!h)return{kind:'review',label:'ต้องตรวจเพิ่ม',reason:'ไม่พบขนาดต้นฉบับของไฟล์นี้'};let checks=[];const target=rule.sizes&&(rule.sizes[b]||rule.sizes.all||rule.sizes.desktop||rule.sizes.mobile);if(target)checks.push(w===target[0]&&h===target[1]);if(rule.maxWidth){const horizontal=w>=h;checks.push(w<=(horizontal?rule.maxWidth.horizontal:rule.maxWidth.vertical))}if(rule.ratio){const [rw,rh]=rule.ratio.split(':').map(Number);checks.push(Math.abs(w/h-rw/rh)<.035)}if(rule.formats?.length){const ext=extension(item.src);if(ext)checks.push(rule.formats.includes(ext));else if(item.kind!=='background')checks.push(false)}if(!checks.length)return{kind:'review',label:'ต้องตรวจเพิ่ม',reason:'รายงานระบุประเภทนี้ แต่ไม่ได้กำหนดขนาดที่ตรวจอัตโนมัติ'};return checks.every(Boolean)?{kind:'pass',label:'ผ่านสเปก',reason:`ขนาดไฟล์ ${size(w,h)} ตรงตามเกณฑ์ ${rule.label}`}:{kind:'fail',label:'ไม่ตรงสเปก',reason:`ขนาดไฟล์ ${size(w,h)} ไม่ตรงกับเกณฑ์ ${expectedText(rule,b)}`}}
-    function focusItem(item){return item.popupCandidate||/banner|hero|slider|carousel|popup|modal|intro|highlight|cover|gallery|video|homepage|home[-_ ]/.test(getText(item))}
-    function card(record,index){const {item,rule,result,bucketName}=record;const label=item.popupCandidate?'Popup / Modal':rule?.label||'Banner / รูปภาพ';const src=esc(item.src||'');const preview=item.kind==='video'?`<video src="${src}" muted controls preload="metadata"></video>`:`<img src="${src}" alt="${esc(label)} ลำดับที่ ${index+1}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'broken',textContent:'ไม่สามารถแสดงตัวอย่างได้'}))">`;const visibleNote=item.visible?'แสดงอยู่บนหน้าเว็บ':'พบในโครงสร้าง Popup แต่ขณะตรวจยังซ่อนอยู่';return `<article class="asset-card"><div class="asset-preview">${src?preview:'<div class="broken">ไม่มี URL สำหรับแสดงตัวอย่าง</div>'}</div><div class="asset-body"><div class="asset-top"><div><span class="asset-type">${esc(label)}</span><p class="asset-source" title="${src}">${src||'ไม่พบ URL รูปภาพ'}</p></div><span class="badge ${result.kind}">${result.label}</span></div><div class="asset-data"><div><span class="data-label">ขนาดที่ใช้งานจริง</span><strong class="data-value">${size(item.renderedWidth,item.renderedHeight)}</strong></div><div><span class="data-label">ขนาดต้นฉบับ</span><strong class="data-value">${size(item.naturalWidth,item.naturalHeight)}</strong></div><div><span class="data-label">สเปกที่คาดหวัง</span><strong class="data-value">${expectedText(rule,bucketName)}</strong></div></div><p class="asset-reason"><strong>${esc(result.reason)}</strong><br>${visibleNote} · อัตราส่วน ${ratio(item.naturalWidth||item.renderedWidth,item.naturalHeight||item.renderedHeight)}</p></div></article>`}
-    function render(data){const profile=selectedProfile(),b=bucket(data.viewport.width),all=(data.items||[]).filter(item=>(item.visible||item.popupCandidate)&&((item.renderedWidth||0)>0||((item.naturalWidth||0)>0))&&item.src);const focus=all.filter(focusItem);const records=focus.map(item=>{const rule=ruleFor(item,profile);return{item,rule,bucketName:b,result:evaluate(item,rule,b)}});const pass=records.filter(x=>x.result.kind==='pass').length,review=records.filter(x=>x.result.kind!=='pass').length;totalCount.textContent=all.length;focusCount.textContent=records.length;passCount.textContent=pass;reviewCount.textContent=review;const name=profile?`${profile.name} · ${profile.description}`:'ไม่ได้เลือกมาตรฐานบริษัท';meta.textContent=`${data.title||data.url} · ${records.length} รายการ · Viewport ${data.viewport.width} × ${data.viewport.height} · ${name}`;printMeta.textContent=`${name} · ${data.url} · ${new Date().toLocaleString('th-TH')}`;specReference.innerHTML=profile?`<strong>เกณฑ์ที่ใช้</strong><span class="spec-pill">${esc(profile.name)}</span><span>${esc(profile.description)}</span><span>ระบบเทียบจากขนาดต้นฉบับก่อน ถ้าเป็น CSS background จะใช้ขนาดที่แสดงจริง</span>`:'<strong>ยังไม่ได้เลือกมาตรฐาน</strong><span>เลือกบริษัทเพื่อให้ระบบเทียบขนาดกับ Website Specification</span>';resultsGrid.innerHTML=records.length?records.map(card).join(''):'<div class="empty"><strong>ยังไม่พบ Banner หรือ Popup ที่ระบบระบุได้</strong>ลองตรวจหน้า Homepage หรือเลือกมาตรฐานบริษัทให้ตรงกับ URL</div>';results.classList.add('show');setStatus(`ตรวจสอบเสร็จแล้ว · พบรูปที่เกี่ยวข้อง ${records.length} รายการ · ผ่านสเปก ${pass} รายการ`)}
-    async function scan(){const raw=urlInput.value.trim();if(!raw){setStatus('กรุณาใส่ URL เว็บไซต์ก่อนตรวจสอบ','error');return}let parsed;try{parsed=new URL(raw)}catch{setStatus('URL ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง','error');return}if(!['http:','https:'].includes(parsed.protocol)){setStatus('รองรับเฉพาะ URL ที่ขึ้นต้นด้วย http:// หรือ https://','error');return}maybeAutoSelect();const [width,height]=viewportInput.value.split('x').map(Number);scanBtn.disabled=true;scanBtn.innerHTML='<span class="loading"><span class="spinner"></span>กำลังตรวจสอบ</span>';setStatus('กำลังเปิดหน้าเว็บและค้นหา Banner / Popup…');results.classList.remove('show');try{const response=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:parsed.toString(),viewport:{width,height}})});const text=await response.text();let data;try{data=JSON.parse(text)}catch{throw new Error('ระบบตรวจเว็บยังไม่พร้อม หรือ API ไม่ได้ทำงานบนลิงก์นี้')}if(!response.ok)throw new Error(data.error||'ไม่สามารถตรวจสอบเว็บไซต์นี้ได้');render(data)}catch(error){setStatus(error.message||'เกิดข้อผิดพลาดระหว่างตรวจสอบ','error')}finally{scanBtn.disabled=false;scanBtn.textContent='ตรวจสอบ'}}
-    /* The report is intentionally page-wide: every detected image is rendered. */
-    function render(data){const profile=selectedProfile(),b=bucket(data.viewport.width),items=(data.items||[]).filter(item=>((item.renderedWidth||0)>0||((item.naturalWidth||0)>0))&&item.src),records=items.map(item=>{const rule=ruleFor(item,profile);return{item,rule,bucketName:b,result:evaluate(item,rule,b)}});totalCount.textContent=records.length;const name=profile?`${profile.name} · ${profile.description}`:'ตรวจรูปภาพตามข้อมูลที่พบในเว็บไซต์';meta.textContent=`${data.title||data.url} · ${records.length} รูปภาพ · Viewport ${data.viewport.width} × ${data.viewport.height}`;printMeta.textContent=`${name} · ${data.url} · ${new Date().toLocaleString('th-TH')}`;specReference.textContent='';resultsGrid.innerHTML=records.length?records.map(card).join(''):'<div class="empty"><strong>ไม่พบรูปภาพในหน้านี้</strong>ลองตรวจสอบ URL หรือเปลี่ยนขนาดหน้าจอ</div>';results.classList.add('show');setStatus(`ตรวจสอบเสร็จแล้ว · พบรูปภาพทั้งหมด ${records.length} รายการ`)}
-    async function scan(){const raw=urlInput.value.trim();if(!raw){setStatus('กรุณาใส่ URL เว็บไซต์ก่อนตรวจสอบ','error');return}let parsed;try{parsed=new URL(raw)}catch{setStatus('URL ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง','error');return}if(!['http:','https:'].includes(parsed.protocol)){setStatus('รองรับเฉพาะ URL ที่ขึ้นต้นด้วย http:// หรือ https://','error');return}maybeAutoSelect();const [width,height]=viewportInput.value.split('x').map(Number);scanBtn.disabled=true;scanBtn.innerHTML='<span class="loading"><span class="spinner"></span>กำลังตรวจสอบ</span>';setStatus('กำลังเปิดหน้าเว็บและตรวจรูปภาพทั้งหมด…');results.classList.remove('show');try{const response=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:parsed.toString(),viewport:{width,height}})});const text=await response.text();let data;try{data=JSON.parse(text)}catch{throw new Error('ระบบตรวจเว็บยังไม่พร้อม หรือ API ไม่ได้ทำงานบนลิงก์นี้')}if(!response.ok)throw new Error(data.error||'ไม่สามารถตรวจสอบเว็บไซต์นี้ได้');render(data)}catch(error){setStatus(error.message||'เกิดข้อผิดพลาดระหว่างตรวจสอบ','error')}finally{scanBtn.disabled=false;scanBtn.textContent='ตรวจสอบ'}}
-    function render(data){const profile=selectedProfile(),b=bucket(data.viewport.width),items=(data.items||[]).filter(item=>item.src),records=items.map(item=>{const rule=ruleFor(item,profile);return{item,rule,bucketName:b,result:evaluate(item,rule,b)}});totalCount.textContent=records.length;const name=profile?`${profile.name} · ${profile.description}`:'ตรวจรูปภาพตามข้อมูลที่พบในเว็บไซต์';meta.textContent=`${data.title||data.url} · ${records.length} รูปภาพ · Viewport ${data.viewport.width} × ${data.viewport.height}`;printMeta.textContent=`${name} · ${data.url} · ${new Date().toLocaleString('th-TH')}`;specReference.textContent='';resultsGrid.innerHTML=records.length?records.map(card).join(''):'<div class="empty"><strong>ไม่พบรูปภาพในหน้านี้</strong>ลองตรวจสอบ URL หรือเปลี่ยนขนาดหน้าจอ</div>';results.classList.add('show');setStatus(`ตรวจสอบเสร็จแล้ว · พบรูปภาพทั้งหมด ${records.length} รายการ`)}
-    /* Exclude CSS background assets from the report entirely. */
-    function render(data){const profile=selectedProfile(),b=bucket(data.viewport.width),items=(data.items||[]).filter(item=>item.src&&item.kind!=='background'),records=items.map(item=>{const rule=ruleFor(item,profile);return{item,rule,bucketName:b,result:evaluate(item,rule,b)}});totalCount.textContent=records.length;const name=profile?`${profile.name} · ${profile.description}`:'ตรวจรูปภาพตามข้อมูลที่พบในเว็บไซต์';meta.textContent=`${data.title||data.url} · ${records.length} รูปภาพ · Viewport ${data.viewport.width} × ${data.viewport.height}`;printMeta.textContent=`${name} · ${data.url} · ${new Date().toLocaleString('th-TH')}`;specReference.textContent='';resultsGrid.innerHTML=records.length?records.map(card).join(''):'<div class="empty"><strong>ไม่พบรูปภาพในหน้านี้</strong>ลองตรวจสอบ URL หรือเปลี่ยนขนาดหน้าจอ</div>';results.classList.add('show');setStatus(`ตรวจสอบเสร็จแล้ว · พบรูปภาพทั้งหมด ${records.length} รายการ`)}
-    function render(data){const profile=selectedProfile(),b=bucket(data.viewport.width),items=(data.items||[]).filter(item=>item.src),records=items.map(item=>{const rule=ruleFor(item,profile);return{item,rule,bucketName:b,result:evaluate(item,rule,b)}});totalCount.textContent=records.length;const name=profile?`${profile.name} · ${profile.description}`:'ตรวจรูปภาพตามข้อมูลที่พบในเว็บไซต์';meta.textContent=`${data.title||data.url} · ${records.length} รูปภาพ · Viewport ${data.viewport.width} × ${data.viewport.height}`;printMeta.textContent=`${name} · ${data.url} · ${new Date().toLocaleString('th-TH')}`;specReference.textContent='';resultsGrid.innerHTML=records.length?records.map(card).join(''):'<div class="empty"><strong>ไม่พบรูปภาพในหน้านี้</strong>ลองตรวจสอบ URL หรือเปลี่ยนขนาดหน้าจอ</div>';results.classList.add('show');setStatus(`ตรวจสอบเสร็จแล้ว · พบรูปภาพทั้งหมด ${records.length} รายการ`)}
-    function sectionName(item){const text=getText(item);if(/popup|modal|dialog|overlay|cookie|consent/.test(text))return'Overlay / Dialog';if(/footer|copyright|social|site-footer/.test(text))return'Footer';if(/header|navbar|nav-|navigation|menu|logo|topbar/.test(text))return'Header / Navigation';if(/hero|masthead|cover|carousel|slider|banner|home[-_ ]?visual/.test(text))return'Main visual';if(/news|article|press|event|blog|media/.test(text))return'News / Content';if(/gallery|portfolio|project|album/.test(text))return'Gallery / Portfolio';return'Other images'}
-    function render(data){const profile=selectedProfile(),b=bucket(data.viewport.width),items=(data.items||[]).filter(item=>item.src),records=items.map(item=>{const rule=ruleFor(item,profile);return{item,rule,bucketName:b,result:evaluate(item,rule,b)}}),sectionOrder=['Header / Navigation','Main visual','News / Content','Gallery / Portfolio','Overlay / Dialog','Footer','Other images'],groups=new Map();records.forEach(record=>{const key=sectionName(record.item);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(record)});totalCount.textContent=records.length;const name=profile?`${profile.name} · ${profile.description}`:'ตรวจรูปภาพตามข้อมูลที่พบในเว็บไซต์';meta.textContent=`${data.title||data.url} · ${records.length} รูปภาพ · Viewport ${data.viewport.width} × ${data.viewport.height}`;printMeta.textContent=`${name} · ${data.url} · ${new Date().toLocaleString('th-TH')}`;specReference.textContent='';const ordered=[...groups.entries()].sort((a,b)=>sectionOrder.indexOf(a[0])-sectionOrder.indexOf(b[0]));resultsGrid.innerHTML=ordered.length?ordered.map(([title,group],index)=>`<section class="section-group"><div class="section-heading"><div><span class="section-kicker">SECTION ${String(index+1).padStart(2,'0')}</span><h3 class="section-title">${title}</h3></div><span class="section-count">${group.length} รูป</span></div><div class="section-grid">${group.map(card).join('')}</div></section>`).join(''):'<div class="empty"><strong>ไม่พบรูปภาพในหน้านี้</strong>ลองตรวจสอบ URL หรือเปลี่ยนขนาดหน้าจอ</div>';results.classList.add('show');setStatus(`ตรวจสอบเสร็จแล้ว · พบรูปภาพทั้งหมด ${records.length} รายการ`)}
-    function sectionName(item){const text=getText(item);if(/popup|modal|dialog|overlay|cookie|consent/.test(text))return'Overlay / Dialog';if(/footer|copyright|social|site-footer/.test(text))return'Footer';if(/header|navbar|nav-|navigation|menu|logo|topbar/.test(text))return'Header / Navigation';if(/hero|masthead|cover|carousel|slider|banner|home[-_ ]?visual/.test(text))return'Banner';if(/news|article|press|event|blog|media/.test(text))return'News / Content';if(/gallery|portfolio|project|album/.test(text))return'Gallery / Portfolio';return'Other images'}
-    function render(data){const profile=selectedProfile(),b=bucket(data.viewport.width),items=(data.items||[]).filter(item=>item.src),records=items.map(item=>{const rule=ruleFor(item,profile);return{item,rule,bucketName:b,result:evaluate(item,rule,b)}}),sectionOrder=['Header / Navigation','Banner','News / Content','Gallery / Portfolio','Overlay / Dialog','Footer','Other images'],groups=new Map();records.forEach(record=>{const key=sectionName(record.item);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(record)});totalCount.textContent=records.length;const name=profile?`${profile.name} · ${profile.description}`:'ตรวจรูปภาพตามข้อมูลที่พบในเว็บไซต์';meta.textContent=`${data.title||data.url} · ${records.length} รูปภาพ · Viewport ${data.viewport.width} × ${data.viewport.height}`;printMeta.textContent=`${name} · ${data.url} · ${new Date().toLocaleString('th-TH')}`;specReference.textContent='';const ordered=[...groups.entries()].sort((a,b)=>sectionOrder.indexOf(a[0])-sectionOrder.indexOf(b[0]));resultsGrid.innerHTML=ordered.length?ordered.map(([title,group],index)=>{const preview=title==='Banner'&&data.screenshot?`<div class="section-preview"><img src="${esc(data.screenshot)}" alt="ภาพตัวอย่าง Section Banner"></div>`:'';return `<section class="section-group">${preview}<div class="section-heading"><div><span class="section-kicker">SECTION ${String(index+1).padStart(2,'0')}</span><h3 class="section-title">${title}</h3></div><span class="section-count">${group.length} รูป</span></div><div class="section-grid">${group.map(card).join('')}</div></section>`}).join(''):'<div class="empty"><strong>ไม่พบรูปภาพในหน้านี้</strong>ลองตรวจสอบ URL หรือเปลี่ยนขนาดหน้าจอ</div>';results.classList.add('show');setStatus(`ตรวจสอบเสร็จแล้ว · พบรูปภาพทั้งหมด ${records.length} รายการ`)}
-    function exportPDF(){if(!results.classList.contains('show')){setStatus('กรุณาตรวจสอบเว็บไซต์ก่อน Export PDF','error');return}window.print()}
-    /* Concise client-facing card: exactly the four requested report fields. */
-    function card(record,index){const {item,rule,bucketName}=record;const src=esc(item.src||'');const preview=item.kind==='video'?`<video src="${src}" muted controls preload="metadata"></video>`:`<img src="${src}" alt="รูปภาพลำดับที่ ${index+1}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'broken',textContent:'ไม่สามารถแสดงตัวอย่างได้'}))">`;const original=size(item.naturalWidth,item.naturalHeight);const target=rule?.sizes&&(rule.sizes[bucketName]||rule.sizes.all||rule.sizes.desktop||rule.sizes.mobile);const needed=target?size(target[0],target[1]):rule?.maxWidth?`≤ ${rule.maxWidth.horizontal} × ${rule.maxWidth.vertical} px`:'—';const width=item.naturalWidth||item.renderedWidth,height=item.naturalHeight||item.renderedHeight;const fileType=extension(item.src)?extension(item.src).toUpperCase():item.kind==='video'?'VIDEO':item.kind==='background'?'CSS':'—';return `<article class="asset-card"><div class="asset-preview">${src?preview:'<div class="broken">ไม่มี URL สำหรับแสดงตัวอย่าง</div>'}</div><div class="asset-body"><div class="asset-data"><div><span class="data-label">ขนาดต้นฉบับ</span><strong class="data-value">${original}</strong></div><div><span class="data-label">ขนาดที่ต้องใช้</span><strong class="data-value">${needed}</strong></div><div><span class="data-label">Ratio</span><strong class="data-value">${ratio(width,height)}</strong></div><div><span class="data-label">ประเภทไฟล์</span><strong class="data-value">${fileType}</strong></div></div></div></article>`}
-    /* Hide CSS as a file type while keeping the detected background image in the report. */
-    function card(record,index){const {item,rule,bucketName}=record;const src=esc(item.src||'');const preview=item.kind==='video'?`<video src="${src}" muted controls preload="metadata"></video>`:`<img src="${src}" alt="รูปภาพลำดับที่ ${index+1}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'broken',textContent:'ไม่สามารถแสดงตัวอย่างได้'}))">`;const original=size(item.naturalWidth,item.naturalHeight);const target=rule?.sizes&&(rule.sizes[bucketName]||rule.sizes.all||rule.sizes.desktop||rule.sizes.mobile);const needed=target?size(target[0],target[1]):rule?.maxWidth?`≤ ${rule.maxWidth.horizontal} × ${rule.maxWidth.vertical} px`:'—';const width=item.naturalWidth||item.renderedWidth,height=item.naturalHeight||item.renderedHeight;const fileType=item.kind==='background'?'—':extension(item.src)?extension(item.src).toUpperCase():item.kind==='video'?'VIDEO':'—';return `<article class="asset-card"><div class="asset-preview">${src?preview:'<div class="broken">ไม่มี URL สำหรับแสดงตัวอย่าง</div>'}</div><div class="asset-body"><div class="asset-data"><div><span class="data-label">ขนาดต้นฉบับ</span><strong class="data-value">${original}</strong></div><div><span class="data-label">ขนาดที่ต้องใช้</span><strong class="data-value">${needed}</strong></div><div><span class="data-label">Ratio</span><strong class="data-value">${ratio(width,height)}</strong></div><div><span class="data-label">ประเภทไฟล์</span><strong class="data-value">${fileType}</strong></div></div></div></article>`}
-    /* Background assets are image assets too; show their real extension, never the word CSS. */
-    function card(record,index){const {item,rule,bucketName}=record;const src=esc(item.src||'');const preview=item.kind==='video'?`<video src="${src}" muted controls preload="metadata"></video>`:`<img src="${src}" alt="รูปภาพลำดับที่ ${index+1}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'broken',textContent:'ไม่สามารถแสดงตัวอย่างได้'}))">`;const original=size(item.naturalWidth,item.naturalHeight);const target=rule?.sizes&&(rule.sizes[bucketName]||rule.sizes.all||rule.sizes.desktop||rule.sizes.mobile);const needed=target?size(target[0],target[1]):rule?.maxWidth?`≤ ${rule.maxWidth.horizontal} × ${rule.maxWidth.vertical} px`:'—';const width=item.naturalWidth||item.renderedWidth,height=item.naturalHeight||item.renderedHeight;const ext=extension(item.src);const fileType=item.kind==='background'?(ext?ext.toUpperCase():'IMAGE'):(ext?ext.toUpperCase():item.kind==='video'?'VIDEO':'—');return `<article class="asset-card"><div class="asset-preview">${src?preview:'<div class="broken">ไม่มี URL สำหรับแสดงตัวอย่าง</div>'}</div><div class="asset-body"><div class="asset-data"><div><span class="data-label">ขนาดต้นฉบับ</span><strong class="data-value">${original}</strong></div><div><span class="data-label">ขนาดที่ต้องใช้</span><strong class="data-value">${needed}</strong></div><div><span class="data-label">Ratio</span><strong class="data-value">${ratio(width,height)}</strong></div><div><span class="data-label">ประเภทไฟล์</span><strong class="data-value">${fileType}</strong></div></div></div></article>`}
-    urlInput.addEventListener('input',maybeAutoSelect);scanBtn.addEventListener('click',scan);rescanBtn.addEventListener('click',scan);printBtn.addEventListener('click',exportPDF);urlInput.addEventListener('keydown',event=>{if(event.key==='Enter')scan()});viewportInput.addEventListener('change',()=>{if(urlInput.value.trim()&&!scanBtn.disabled)scan()});
+    const $ = (id) => document.getElementById(id);
+    const urlInput = $('url');
+    const viewportInput = $('viewport');
+    const scanBtn = $('scanBtn');
+    const rescanBtn = $('rescanBtn');
+    const printBtn = $('printBtn');
+    const status = $('status');
+    const results = $('results');
+    const meta = $('meta');
+    const resultsGrid = $('resultsGrid');
+    const totalCount = $('totalCount');
+    const profiles = window.OPTWISE_SPECS || [];
+    const configuredApiBase = document.querySelector('meta[name="optiwise-api-base"]')?.content?.trim() || window.OPTWISE_API_BASE || '';
+    const apiBase = configuredApiBase.replace(/\/$/, '');
+    const autoMap = [['assetworldcorp-th.com', 'AWC'], ['egco.com', 'EGCO'], ['microleasingplc.com', 'MICRO'], ['sustainability.pttgcgroup.com', 'PTTGC-SD'], ['pttgcgroup.com', 'PTTGC'], ['superturtle.co.th', 'TURTLE'], ['rabbit', 'RABBIT']];
+    const sectionOrder = ['Banner', 'Header / Navigation', 'News / Content', 'Gallery / Portfolio', 'Overlay / Dialog', 'Other images'];
+    const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
+    const size = (width, height) => width && height ? `${Number(width).toLocaleString('en-US')} × ${Number(height).toLocaleString('en-US')} px` : '—';
+    const ratio = (width, height) => width && height ? `${(Math.max(width, height) / Math.min(width, height)).toFixed(2)}:1` : '—';
+    const bucket = (width) => width <= 600 ? 'mobile' : width <= 1100 ? 'tablet' : 'desktop';
+    const extension = (source) => { const match = String(source || '').split('?')[0].toLowerCase().match(/\.([a-z0-9]{2,5})$/); return match ? match[1] : ''; };
+    const textOf = (item) => [item.section, item.token, item.alt, item.id, item.className, item.src, item.link].join(' ').toLowerCase();
+    const selectedProfile = () => { const value = urlInput.value.toLowerCase(); const found = autoMap.find(([domain]) => value.includes(domain)); return profiles.find((profile) => profile.id === (found ? found[1] : '')) || null; };
+
+    function setStatus(message, kind = 'show') { status.textContent = message; status.className = `status ${kind}`; }
+
+    function ruleFor(item, profile) {
+      if (!profile) return null;
+      const text = textOf(item);
+      if (item.popupCandidate) return profile.rules.find((rule) => rule.id === 'popup') || null;
+      const priority = ['feature', 'highlight', 'gallery', 'youtube', 'cover', 'home-video', 'video', 'hero', 'home-hero', 'page-banner', 'menu-banner', 'home-banner', 'banner', 'logo', 'content', 'shortcut', 'business'];
+      for (const id of priority) { const rule = profile.rules.find((candidate) => candidate.id === id); if (rule && rule.match?.some((word) => text.includes(word))) return rule; }
+      return profile.rules.find((rule) => rule.match?.some((word) => text.includes(word))) || null;
+    }
+
+    function expected(rule, viewportBucket) {
+      if (!rule) return '—';
+      const target = rule.sizes && (rule.sizes[viewportBucket] || rule.sizes.all || rule.sizes.desktop || rule.sizes.mobile);
+      if (target) return size(target[0], target[1]);
+      if (rule.maxWidth) return `≤ ${rule.maxWidth.horizontal} × ${rule.maxWidth.vertical} px`;
+      return '—';
+    }
+
+    function previewMarkup(item, index) {
+      const source = esc(item.previewSrc || item.src || '');
+      if (!source) return '<div class="broken">ไม่มีตัวอย่างให้แสดง</div>';
+      const alt = esc(item.alt || `รูปภาพลำดับที่ ${index + 1}`);
+      if (item.kind === 'video' && !item.previewSrc) return `<video src="${source}" muted controls preload="metadata"></video>`;
+      return `<img src="${source}" alt="${alt}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'broken',textContent:'ไม่สามารถแสดงตัวอย่างได้'}))">`;
+    }
+
+    function card(record, index) {
+      const { item, rule, viewportBucket } = record;
+      const originalWidth = item.naturalWidth || item.renderedWidth;
+      const originalHeight = item.naturalHeight || item.renderedHeight;
+      const fileType = item.fileType || (item.kind === 'video' ? 'VIDEO' : extension(item.src).toUpperCase() || 'IMAGE');
+      return `<article class="asset-card"><div class="asset-preview">${previewMarkup(item, index)}</div><div class="asset-body"><div class="asset-data"><div><span class="data-label">ขนาดต้นฉบับ</span><strong class="data-value">${size(item.naturalWidth, item.naturalHeight)}</strong></div><div><span class="data-label">ขนาดที่ต้องใช้</span><strong class="data-value">${expected(rule, viewportBucket)}</strong></div><div><span class="data-label">Ratio</span><strong class="data-value">${ratio(originalWidth, originalHeight)}</strong></div><div><span class="data-label">ประเภทไฟล์</span><strong class="data-value">${esc(fileType)}</strong></div></div></div></article>`;
+    }
+
+    function render(data) {
+      const profile = selectedProfile();
+      const viewportBucket = bucket(data.viewport.width);
+      const items = (data.items || []).filter((item) => item.visible !== false && item.kind !== 'background' && item.src);
+      const records = items.map((item) => ({ item, rule: ruleFor(item, profile), viewportBucket }));
+      totalCount.textContent = records.length;
+      const profileText = profile ? ` · ${profile.name}` : '';
+      meta.textContent = `${data.title || data.url} · ${records.length} รูป · Viewport ${data.viewport.width} × ${data.viewport.height}${profileText}`;
+      const groups = new Map();
+      records.forEach((record) => { const name = record.item.section || 'Other images'; if (!groups.has(name)) groups.set(name, []); groups.get(name).push(record); });
+      const ordered = [...groups.entries()].sort((a, b) => (sectionOrder.indexOf(a[0]) < 0 ? 99 : sectionOrder.indexOf(a[0])) - (sectionOrder.indexOf(b[0]) < 0 ? 99 : sectionOrder.indexOf(b[0])));
+      let cardIndex = 0;
+      resultsGrid.innerHTML = ordered.length ? ordered.map(([name, group], sectionIndex) => `<section class="section-group"><div class="section-heading"><div><span class="section-kicker">SECTION ${String(sectionIndex + 1).padStart(2, '0')}</span><h3 class="section-title">${esc(name)}</h3></div><span class="section-count">${group.length} รูป</span></div><div class="section-grid">${group.map((record) => card(record, cardIndex++)).join('')}</div></section>`).join('') : '<div class="empty"><strong>ไม่พบรูปภาพที่แสดงอยู่ในหน้านี้</strong>ลองตรวจสอบ URL หรือเปลี่ยนขนาดหน้าจอ</div>';
+      results.classList.add('show');
+      setStatus(`ตรวจสอบเสร็จแล้ว · พบรูปภาพทั้งหมด ${records.length} รายการ`);
+    }
+
+    async function scan() {
+      const raw = urlInput.value.trim();
+      if (!raw) { setStatus('กรุณาใส่ URL เว็บไซต์ก่อนตรวจสอบ', 'error'); return; }
+      let parsed;
+      try { parsed = new URL(raw); } catch { setStatus('URL ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง', 'error'); return; }
+      if (!['http:', 'https:'].includes(parsed.protocol)) { setStatus('รองรับเฉพาะ URL ที่ขึ้นต้นด้วย http:// หรือ https://', 'error'); return; }
+      const [width, height] = viewportInput.value.split('x').map(Number);
+      scanBtn.disabled = true;
+      scanBtn.innerHTML = '<span class="loading"><span class="spinner"></span>กำลังตรวจสอบ</span>';
+      results.classList.remove('show');
+      setStatus('กำลังเปิดหน้าเว็บ อ่านรูปที่แสดงจริง และตรวจ Responsive…');
+      try {
+        const response = await fetch(`${apiBase}/api/scan`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: parsed.toString(), viewport: { width, height } }) });
+        const rawResponse = await response.text();
+        let data; try { data = JSON.parse(rawResponse); } catch { throw new Error(`ระบบ API ยังไม่พร้อม กรุณาตรวจสอบ ${apiBase || 'API Server'} และ /health`); }
+        if (!response.ok) throw new Error(data.error || 'ไม่สามารถตรวจสอบเว็บไซต์นี้ได้');
+        render(data);
+      } catch (error) { setStatus(error.message || 'เกิดข้อผิดพลาดระหว่างตรวจสอบ', 'error'); }
+      finally { scanBtn.disabled = false; scanBtn.textContent = 'ตรวจสอบ'; }
+    }
+
+    function exportPDF() { if (!results.classList.contains('show')) { setStatus('กรุณาตรวจสอบเว็บไซต์ก่อน Export PDF', 'error'); return; } window.print(); }
+    scanBtn.addEventListener('click', scan);
+    rescanBtn.addEventListener('click', scan);
+    printBtn.addEventListener('click', exportPDF);
+    urlInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') scan(); });
+    viewportInput.addEventListener('change', () => { if (urlInput.value.trim() && !scanBtn.disabled) scan(); });
   </script>
 </body>
 </html>

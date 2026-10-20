@@ -1,36 +1,26 @@
-# Image Size Inspector v1.0.3
+# Optiwise Image Inspector
 
-Chrome/Edge Extension สำหรับตรวจขนาดรูปแบบ Inspector โดยไม่ทำ overlay ทั้งหน้าเป็นค่าเริ่มต้น
+เครื่องมือตรวจรูปภาพและ Video ที่แสดงอยู่จริงบนเว็บไซต์ Public โดยใช้ Playwright เปิดเว็บใน viewport ที่เลือก แล้วเทียบขนาดที่พบกับ Website Specification ของ AWC, EGCO, MICRO, PTTGC, PTTGC SD, RABBIT และ TURTLE
 
-## ติดตั้งเพื่อทดลอง
+ผู้ใช้วาง URL แล้วกดตรวจสอบ ระบบจะอ่าน `currentSrc` ของรูป Responsive, ขนาดต้นฉบับ, ขนาดที่แสดงจริง, Ratio และประเภทไฟล์ จากนั้นจัดกลุ่มเป็น Section เช่น Banner, News และ Gallery ปุ่ม Export PDF ใช้พิมพ์รายงานเป็น PDF เพื่อส่งให้ลูกค้า
 
-1. แตกไฟล์ ZIP นี้ไว้ในเครื่อง
-2. เปิด Chrome แล้วเข้า `chrome://extensions` หรือ Edge แล้วเข้า `edge://extensions`
-3. เปิด **Developer mode**
-4. กด **Load unpacked** แล้วเลือกโฟลเดอร์ที่มี `manifest.json`
-5. เปิดหน้าเว็บไซต์ที่ต้องการตรวจ กดไอคอน Extension แล้วกดสวิตช์ให้เป็น **ON**
+ระบบตั้งใจตรวจเฉพาะ `<img>` และ `<video>` ที่แสดงอยู่จริง ไม่รวม CSS `background-image` เพื่อไม่ให้รายการรกและลดเวลาโหลด การตรวจจะมี hover sweep สั้น ๆ เพื่อจับรูปที่แสดงหลัง Hover หรือ Carousel เปลี่ยนสถานะ
 
-## วิธีใช้
+## Deploy บน Render
 
-- เปิด/ปิดโหมดตรวจจากสวิตช์เดียว โดย `OFF` คือปิด และ `ON` คือเปิด แล้วเลื่อนเมาส์ไปบน `<img>`, `<video>` หรือ visual tile ที่ใช้ background เฉพาะก้อน
-- ตัวเลขกลางกรอบคือขนาดที่แสดงจริงบนหน้าเว็บ เช่น `1000 × 900 px` พร้อม Ratio
-- ขยับเมาส์ออกจากรูปเพื่อซ่อนกรอบ
-- กด `Esc` เพื่อปิดโหมดตรวจ
+1. อัปโหลดไฟล์ทั้งหมดในโฟลเดอร์นี้ไว้ที่ root ของ GitHub repository
+2. สร้าง Render Web Service จาก repository นี้
+3. เลือก Docker และใช้แผน Free
+4. เปิด URL ที่ Render แสดงให้ใช้งาน
 
-## หลักการตรวจ
+ระบบมี `GET /health` สำหรับตรวจสถานะ และ `POST /api/scan` สำหรับตรวจเว็บไซต์
 
-- ใช้ `currentSrc` ก่อน `src` เพื่อให้ได้ไฟล์ที่ Browser เลือกจริงจาก `srcset`/`picture`
-- ไม่ดึง `data-src` หรือ lazy-load placeholder มานับก่อนรูปโหลดและแสดงจริง
-- ใช้ `naturalWidth`/`naturalHeight` เป็นขนาดต้นฉบับ
-- ใช้ `getBoundingClientRect()` เป็นขนาดที่แสดงจริงบนหน้า
-- ตรวจ `<img>` และ `<video>` ที่กำลังแสดงอยู่เท่านั้น
-- ใช้ลำดับชั้นจริงใต้ pointer เพื่อไม่เลือกภาพที่ถูกซ่อนหรือถูก element อื่นบัง
-- ตัดกรอบตาม viewport เพื่อไม่ให้ overlay หลุดออกนอกหน้าจอ
-- รองรับรูปที่เพิ่มหลังจาก Hover หรือ Lazy load ด้วย DOM observer และการตรวจซ้ำแบบหน่วงเวลา
-- ตรวจ full-width CSS background เฉพาะเมื่ออยู่ใน hero/banner/carousel และไม่ตรวจ header หรือ section ทั่วไป
+## ใช้ร่วมกับ GitHub Pages
 
-## ข้อจำกัด
+หน้า GitHub Pages เป็น Static Site จึงต้องให้หน้าเว็บเรียก API ที่ Deploy บน Render แยกต่างหาก
 
-- Popup ที่ยังไม่ได้เปิดจะยังไม่ถูกตรวจ เพราะ Extension ตั้งใจตรวจสิ่งที่ผู้ใช้เห็นจริงในหน้านั้น
-- หน้า `chrome://`, Chrome Web Store และหน้าระบบบางประเภทไม่อนุญาตให้ Extension อ่านข้อมูล
-- ยังไม่มี Export PDF; ใช้ Web Image Report สำหรับทำรายงานลูกค้า
+- API ที่คาดไว้: `https://image-size-inspector.onrender.com`
+- ตรวจสถานะ API: `https://image-size-inspector.onrender.com/health`
+- ตั้งค่า CORS ผ่าน `CORS_ORIGINS` เป็น `https://dragonyokp.github.io`
+
+ถ้า URL ของ Render เปลี่ยน ให้แก้ค่า `optiwise-api-base` ใน `index.html` ให้ตรงกับ URL จริงก่อน Deploy หน้า GitHub Pages

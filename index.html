@@ -99,7 +99,7 @@
         <div><label class="field-label" for="viewport">ขนาดหน้าจอสำหรับตรวจ</label><select id="viewport"><option value="1920x1080" selected>Desktop · 1920 × 1080</option><option value="1440x900">Desktop · 1440 × 900</option><option value="1366x768">Laptop · 1366 × 768</option><option value="1024x768">Tablet · 1024 × 768</option><option value="820x1180">iPad · 820 × 1180</option><option value="430x932">Mobile · 430 × 932</option><option value="390x844">Mobile Small · 390 × 844</option></select></div>
         <button class="primary" id="scanBtn" type="button">ตรวจสอบ</button>
       </div>
-      <p class="hint">ตรวจเฉพาะรูปภาพและ Video ที่แสดงอยู่จริงบนหน้าเว็บ · ไม่รวม CSS background · รองรับรูป Responsive จาก srcset</p>
+      <p class="hint">ตรวจรูปภาพ, Video และ CSS background ที่แสดงอยู่จริง · รองรับรูป Responsive จาก srcset · ใช้เวลาตรวจตามความหนักของเว็บไซต์</p>
       <div class="status" id="status" role="status"></div>
     </section>
 
@@ -211,6 +211,16 @@
       scanBtn.innerHTML = '<span class="loading"><span class="spinner"></span>กำลังตรวจสอบ</span>';
       results.classList.remove('show');
       setStatus('กำลังเปิดหน้าเว็บ อ่านรูปที่แสดงจริง และตรวจ Responsive…');
+      const progressMessages = [
+        'กำลังเปิดหน้าเว็บและรอเนื้อหาหลัก…',
+        'กำลังตรวจรูปในส่วนที่มองเห็นและรูปที่โหลดแบบ Lazy load…',
+        'กำลังตรวจ Card, Carousel และ CSS background…'
+      ];
+      let progressIndex = 0;
+      const progressTimer = window.setInterval(() => {
+        progressIndex = (progressIndex + 1) % progressMessages.length;
+        setStatus(progressMessages[progressIndex]);
+      }, 1100);
       try {
         const response = await fetch(`${apiBase}/api/scan`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: parsed.toString(), viewport: { width, height } }) });
         const rawResponse = await response.text();
@@ -218,7 +228,7 @@
         if (!response.ok) throw new Error(data.error || 'ไม่สามารถตรวจสอบเว็บไซต์นี้ได้');
         render(data);
       } catch (error) { setStatus(error.message || 'เกิดข้อผิดพลาดระหว่างตรวจสอบ', 'error'); }
-      finally { scanBtn.disabled = false; scanBtn.textContent = 'ตรวจสอบ'; }
+      finally { window.clearInterval(progressTimer); scanBtn.disabled = false; scanBtn.textContent = 'ตรวจสอบ'; }
     }
 
     function exportPDF() { if (!results.classList.contains('show')) { setStatus('กรุณาตรวจสอบเว็บไซต์ก่อน Export PDF', 'error'); return; } window.print(); }

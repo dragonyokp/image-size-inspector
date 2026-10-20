@@ -233,28 +233,29 @@ app.post('/api/scan', async (req, res) => {
     const page = await context.newPage();
     page.setDefaultTimeout(8000);
 
-    // Do not wait for fonts or websocket connections on a heavy site. Keep media
-    // requests alive so video metadata/posters can still be inspected.
+    // Do not wait for font, media, or websocket downloads. The video element and
+    // its poster are still detected from the rendered DOM, without downloading a
+    // potentially huge hero video during a report scan.
     await page.route('**/*', (route) => {
       const type = route.request().resourceType();
-      if (['font', 'websocket'].includes(type)) return route.abort();
+      if (['font', 'media', 'websocket'].includes(type)) return route.abort();
       return route.continue();
     });
 
     // Render's public request window is short. Start at navigation commit, then allow
     // the first screen to settle briefly instead of waiting for every site request.
-    await page.goto(url, { waitUntil: 'commit', timeout: 12000 }).catch(() => {});
-    await page.waitForLoadState('domcontentloaded', { timeout: 7000 }).catch(() => {});
-    await page.waitForTimeout(800);
+    await page.goto(url, { waitUntil: 'commit', timeout: 9000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded', { timeout: 4500 }).catch(() => {});
+    await page.waitForTimeout(450);
 
     // A single DOM snapshot misses lazy-loaded cards, carousel slides and CSS
     // backgrounds. Walk through the page in viewport-sized steps, trigger the
     // same hover states at each step, and merge the results from every pass.
     const scanPositions = await page.evaluate(() => {
       const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-      const step = Math.max(420, Math.round(window.innerHeight * 0.82));
+      const step = Math.max(520, Math.round(window.innerHeight * 1.05));
       const positions = [];
-      for (let y = 0; y <= max && positions.length < 10; y += step) positions.push(y);
+      for (let y = 0; y <= max && positions.length < 8; y += step) positions.push(y);
       if (!positions.includes(max)) positions.push(max);
       return positions;
     }).catch(() => [0]);
@@ -262,14 +263,14 @@ app.post('/api/scan', async (req, res) => {
     const items = [];
     for (const scrollY of scanPositions) {
       await page.evaluate((y) => window.scrollTo(0, y), scrollY).catch(() => {});
-      await page.waitForTimeout(230);
+      await page.waitForTimeout(120);
 
       const points = await page.evaluate(hoverCandidates).catch(() => []);
-      for (const point of points.slice(0, 10)) {
+      for (const point of points.slice(0, 4)) {
         await page.mouse.move(point.x, point.y).catch(() => {});
-        await page.waitForTimeout(35);
+        await page.waitForTimeout(20);
       }
-      await page.waitForTimeout(100);
+      await page.waitForTimeout(60);
 
       for (const frame of page.frames()) {
         try {

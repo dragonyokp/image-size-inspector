@@ -169,7 +169,11 @@
       const originalWidth = item.naturalWidth || item.renderedWidth;
       const originalHeight = item.naturalHeight || item.renderedHeight;
       const fileType = item.fileType || (item.kind === 'video' ? 'VIDEO' : extension(item.src).toUpperCase() || 'IMAGE');
-      return `<article class="asset-card"><div class="asset-preview">${previewMarkup(item, index)}</div><div class="asset-body"><div class="asset-data"><div><span class="data-label">ขนาดต้นฉบับ</span><strong class="data-value">${size(item.naturalWidth, item.naturalHeight)}</strong></div><div><span class="data-label">ขนาดที่ต้องใช้</span><strong class="data-value">${expected(rule, viewportBucket)}</strong></div><div><span class="data-label">Ratio</span><strong class="data-value">${ratio(originalWidth, originalHeight)}</strong></div><div><span class="data-label">ประเภทไฟล์</span><strong class="data-value">${esc(fileType)}</strong></div></div></div></article>`;
+      const requiredSize = expected(rule, viewportBucket);
+      const displayedSize = size(item.renderedWidth, item.renderedHeight);
+      const targetLabel = requiredSize === '—' ? 'ขนาดที่แสดงจริง' : 'ขนาดที่ต้องใช้';
+      const targetValue = requiredSize === '—' ? displayedSize : requiredSize;
+      return `<article class="asset-card"><div class="asset-preview">${previewMarkup(item, index)}</div><div class="asset-body"><div class="asset-data"><div><span class="data-label">ขนาดต้นฉบับ</span><strong class="data-value">${size(item.naturalWidth, item.naturalHeight)}</strong></div><div><span class="data-label">${targetLabel}</span><strong class="data-value">${targetValue}</strong></div><div><span class="data-label">Ratio</span><strong class="data-value">${ratio(originalWidth, originalHeight)}</strong></div><div><span class="data-label">ประเภทไฟล์</span><strong class="data-value">${esc(fileType)}</strong></div></div></div></article>`;
     }
 
     function render(data) {

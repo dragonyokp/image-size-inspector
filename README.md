@@ -6,7 +6,7 @@ Repository นี้รวม Web Inspector, API Server และ Chrome Extensi
 
 ผู้ใช้วาง URL แล้วกดตรวจสอบ ระบบจะอ่าน `currentSrc` ของรูป Responsive, ขนาดต้นฉบับ, ขนาดที่แสดงจริง, Ratio และประเภทไฟล์ จากนั้นจัดกลุ่มเป็น Section เช่น Banner, News และ Gallery ปุ่ม Export PDF ใช้พิมพ์รายงานเป็น PDF เพื่อส่งให้ลูกค้า
 
-ระบบตั้งใจตรวจเฉพาะ `<img>` และ `<video>` ที่แสดงอยู่จริง ไม่รวม CSS `background-image` เพื่อไม่ให้รายการรกและลดเวลาโหลด การตรวจจะมี hover sweep สั้น ๆ เพื่อจับรูปที่แสดงหลัง Hover หรือ Carousel เปลี่ยนสถานะ
+ระบบตรวจ `<img>`, `<video>` และ CSS `background-image` ที่เป็นภาพของ Hero, Banner, Carousel หรือ Tile ที่แสดงจริง โดยกรองรูปที่ยังไม่โหลด รูปซ่อน และรูปที่ถูกตัดด้วย container ออก การตรวจจะมี hover sweep สั้น ๆ เพื่อจับรูปที่แสดงหลัง Hover หรือ Carousel เปลี่ยนสถานะ
 
 ## Deploy บน Render
 

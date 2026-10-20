@@ -54,14 +54,35 @@ async function safePublicUrl(raw) {
   return url.toString();
 }
 
-// Runs inside the target page. Only real <img> and <video> elements are collected.
-// CSS background-image is deliberately excluded from the report.
+// Runs inside the target page. Collect only loaded/painted assets and use the
+// same visibility, clipping, hover, and background rules as the Extension.
 const frameScript = () => {
-  const visible = (element) => {
-    const rect = element.getBoundingClientRect();
-    const style = getComputedStyle(element);
-    return rect.width >= 12 && rect.height >= 12 && style.display !== 'none' &&
-      style.visibility !== 'hidden' && Number(style.opacity || 1) > 0;
+  const visible = (element, rect) => {
+    if (!element || !rect || rect.width < 12 || rect.height < 12) return false;
+    for (let current = element; current && current !== document.documentElement; current = current.parentElement) {
+      const style = getComputedStyle(current);
+      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity || 1) <= 0) return false;
+    }
+    return true;
+  };
+
+  const visualRect = (element) => {
+    if (!element?.getBoundingClientRect) return null;
+    const raw = element.getBoundingClientRect();
+    let left = raw.left;
+    let top = raw.top;
+    let right = raw.right;
+    let bottom = raw.bottom;
+    for (let parent = element.parentElement; parent && parent !== document.documentElement; parent = parent.parentElement) {
+      const style = getComputedStyle(parent);
+      const clipsX = !['visible', 'unset', 'initial'].includes(style.overflowX);
+      const clipsY = !['visible', 'unset', 'initial'].includes(style.overflowY);
+      if (!clipsX && !clipsY) continue;
+      const clip = parent.getBoundingClientRect();
+      if (clipsX) { left = Math.max(left, clip.left); right = Math.min(right, clip.right); }
+      if (clipsY) { top = Math.max(top, clip.top); bottom = Math.min(bottom, clip.bottom); }
+    }
+    return { left, top, right, bottom, width: right - left, height: bottom - top };
   };
 
   const token = (element) => [
@@ -80,18 +101,38 @@ const frameScript = () => {
     link: element.closest('a')?.href || ''
   });
 
-  const source = (element) => {
-    // currentSrc is the responsive asset actually selected by the browser.
-    const candidates = [
-      element.currentSrc,
-      element.getAttribute('src'),
-      element.querySelector?.('source[src]')?.src,
-      element.getAttribute('data-src'),
-      element.getAttribute('data-lazy-src'),
-      element.getAttribute('data-original'),
-      element.getAttribute('data-url')
-    ].filter(Boolean);
-    return candidates.find((value) => !String(value).startsWith('data:image/')) || '';
+  const absolute = (value) => {
+    try { return new URL(value, location.href).href; } catch { return ''; }
+  };
+
+  const imageSource = (element) => [element.currentSrc, element.getAttribute('src')]
+    .filter(Boolean).find((value) => !String(value).startsWith('data:image/')) || '';
+
+  const videoSource = (element) => element.currentSrc || element.getAttribute('src') ||
+    element.querySelector?.('source[src]')?.src || element.poster || '';
+
+  const backgroundSource = (element) => {
+    const value = getComputedStyle(element).backgroundImage || '';
+    return value.match(/url\((['"]?)(.*?)\1\)/i)?.[2] || '';
+  };
+
+  const looksLikeHero = (element) => {
+    const parts = [];
+    for (let current = element; current && parts.length < 8; current = current.parentElement) {
+      const className = typeof current.className === 'string' ? current.className : '';
+      parts.push(`${current.id || ''} ${className}`.toLowerCase());
+    }
+    return /hero|banner|masthead|carousel|slider|swiper|spotlight|home[-_ ]?visual/.test(parts.join(' '));
+  };
+
+  const backgroundAllowed = (element, rawRect) => {
+    const sourceValue = backgroundSource(element);
+    if (!sourceValue || !rawRect) return false;
+    const fullWidth = rawRect.width >= window.innerWidth * 0.92;
+    const heroLike = looksLikeHero(element);
+    if ((fullWidth && !heroLike) || rawRect.height > window.innerHeight * 1.15) return false;
+    if (fullWidth && rawRect.height < 160) return false;
+    return true;
   };
 
   const popupParent = (element) => {
@@ -130,24 +171,30 @@ const frameScript = () => {
   const items = [];
   const elements = new Set();
   const add = (element, kind) => {
-    if (elements.has(element) || !visible(element)) return;
-    const rect = element.getBoundingClientRect();
-    const src = source(element);
+    if (elements.has(element)) return;
+    const rawRect = element.getBoundingClientRect();
+    const rect = visualRect(element);
+    if (!visible(element, rect)) return;
+    if (kind === 'image' && (!element.complete || !element.naturalWidth || !element.naturalHeight)) return;
+    if (kind === 'background' && !backgroundAllowed(element, rawRect)) return;
+    const sourceValue = kind === 'image' ? imageSource(element) : kind === 'video' ? videoSource(element) : backgroundSource(element);
+    const src = absolute(sourceValue);
     if (!src) return;
     const popup = popupParent(element);
-    const absolute = new URL(src, location.href).href;
     elements.add(element);
     items.push({
       ...meta(element),
       kind,
-      src: absolute,
-      previewSrc: kind === 'video' ? (element.poster ? new URL(element.poster, location.href).href : absolute) : absolute,
-      fileType: kind === 'video' ? 'VIDEO' : extension(absolute) || 'IMAGE',
+      src,
+      previewSrc: kind === 'video' ? absolute(element.poster || src) : src,
+      fileType: kind === 'video' ? 'VIDEO' : extension(src) || 'IMAGE',
       section: section(element),
       renderedWidth: Math.round(rect.width),
       renderedHeight: Math.round(rect.height),
-      naturalWidth: kind === 'video' ? (element.videoWidth || 0) : (element.naturalWidth || 0),
-      naturalHeight: kind === 'video' ? (element.videoHeight || 0) : (element.naturalHeight || 0),
+      naturalWidth: kind === 'video' ? (element.videoWidth || 0) : kind === 'background' ? 0 : (element.naturalWidth || 0),
+      naturalHeight: kind === 'video' ? (element.videoHeight || 0) : kind === 'background' ? 0 : (element.naturalHeight || 0),
+      top: Math.round(rawRect.top + window.scrollY),
+      left: Math.round(rawRect.left + window.scrollX),
       visible: true,
       popupCandidate: Boolean(popup)
     });
@@ -155,7 +202,10 @@ const frameScript = () => {
 
   document.querySelectorAll('img').forEach((element) => add(element, 'image'));
   document.querySelectorAll('video').forEach((element) => add(element, 'video'));
-  items.sort((a, b) => a.renderedWidth * a.renderedHeight - b.renderedWidth * b.renderedHeight);
+  document.querySelectorAll('*').forEach((element) => {
+    if (backgroundSource(element)) add(element, 'background');
+  });
+  items.sort((a, b) => a.top - b.top || a.left - b.left);
   items.forEach((item, index) => { item.index = index + 1; });
   return { items };
 };

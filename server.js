@@ -249,21 +249,19 @@ app.post('/api/scan', async (req, res) => {
     await page.waitForTimeout(450);
 
     // Several supported sites render their cards after DOMContentLoaded (Vue,
-    // Swiper and lazy sections are common examples). Wait until the asset/size
-    // signature stops changing, but cap this at a short bounded window so a
-    // broken third-party script cannot hold the report forever.
+    // Swiper and lazy sections are common examples). Wait for a cheap DOM/size
+    // signature only; do not calculate computed styles for every element here.
+    // The expensive visual scan happens once, after the lazy-load sweep.
     let previousSignature = '';
     let stablePasses = 0;
-    for (let pass = 0; pass < 8 && stablePasses < 2; pass += 1) {
+    for (let pass = 0; pass < 7 && stablePasses < 2; pass += 1) {
       const signature = await page.evaluate(() => {
-        const imageSources = [...document.images].slice(0, 24).map((element) => element.currentSrc || element.src || '').join('|');
-        const videoCount = document.querySelectorAll('video').length;
-        const backgroundSources = [...document.querySelectorAll('*')]
-          .map((element) => getComputedStyle(element).backgroundImage || '')
-          .filter((value) => value.includes('url('))
-          .slice(0, 24)
-          .join('|');
-        return [document.readyState, document.documentElement.scrollHeight, imageSources, videoCount, backgroundSources].join('::');
+        return [
+          document.readyState,
+          document.documentElement.scrollHeight,
+          document.images.length,
+          document.querySelectorAll('video').length
+        ].join('::');
       }).catch(() => '');
       stablePasses = signature && signature === previousSignature ? stablePasses + 1 : 0;
       previousSignature = signature;
@@ -282,7 +280,6 @@ app.post('/api/scan', async (req, res) => {
       return positions;
     }).catch(() => [0]);
 
-    const items = [];
     for (const scrollY of scanPositions) {
       await page.evaluate((y) => window.scrollTo(0, y), scrollY).catch(() => {});
       await page.waitForTimeout(120);
@@ -293,16 +290,19 @@ app.post('/api/scan', async (req, res) => {
         await page.waitForTimeout(20);
       }
       await page.waitForTimeout(60);
-
-      for (const frame of page.frames()) {
-        try {
-          const result = await frame.evaluate(frameScript);
-          result.items.forEach((item) => items.push({ ...item, frameUrl: frame.url() }));
-        } catch (_) { /* cross-origin or closed frame */ }
-      }
     }
 
     await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
+
+    // The DOM now contains the assets revealed by the sweep. Run the expensive
+    // visibility/clipping/background pass once instead of once per scroll step.
+    const items = [];
+    for (const frame of page.frames()) {
+      try {
+        const result = await frame.evaluate(frameScript);
+        result.items.forEach((item) => items.push({ ...item, frameUrl: frame.url() }));
+      } catch (_) { /* cross-origin or closed frame */ }
+    }
 
     const unique = items.filter((item, index, all) => index === all.findIndex((candidate) =>
       candidate.src === item.src && candidate.frameUrl === item.frameUrl &&

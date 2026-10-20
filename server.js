@@ -186,7 +186,9 @@ const frameScript = () => {
       ...meta(element),
       kind,
       src,
-      previewSrc: kind === 'video' ? absolute(element.poster || src) : src,
+      // A video source is not an image. Keep only its poster as the preview
+      // image; the report will render the actual source in a <video> element.
+      previewSrc: kind === 'video' ? absolute(element.poster || '') : src,
       fileType: kind === 'video' ? 'VIDEO' : extension(src) || 'IMAGE',
       section: section(element),
       renderedWidth: Math.round(rect.width),
@@ -231,11 +233,11 @@ app.post('/api/scan', async (req, res) => {
     const page = await context.newPage();
     page.setDefaultTimeout(8000);
 
-    // Do not wait for every font, video, analytics request, or websocket on a heavy site.
-    // The report only needs the rendered DOM and image/video metadata.
+    // Do not wait for fonts or websocket connections on a heavy site. Keep media
+    // requests alive so video metadata/posters can still be inspected.
     await page.route('**/*', (route) => {
       const type = route.request().resourceType();
-      if (['font', 'media', 'websocket'].includes(type)) return route.abort();
+      if (['font', 'websocket'].includes(type)) return route.abort();
       return route.continue();
     });
 
@@ -245,27 +247,39 @@ app.post('/api/scan', async (req, res) => {
     await page.waitForLoadState('domcontentloaded', { timeout: 7000 }).catch(() => {});
     await page.waitForTimeout(800);
 
-    // Scroll once to trigger lazy images, then return to the top for the report screenshot.
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)).catch(() => {});
-    await page.waitForTimeout(300);
-    await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
-    await page.waitForTimeout(120);
-
-    // A short hover sweep catches carousel/hover-revealed image elements without making a full crawl.
-    const points = await page.evaluate(hoverCandidates).catch(() => []);
-    for (const point of points) {
-      await page.mouse.move(point.x, point.y).catch(() => {});
-      await page.waitForTimeout(55);
-    }
-    await page.waitForTimeout(160);
+    // A single DOM snapshot misses lazy-loaded cards, carousel slides and CSS
+    // backgrounds. Walk through the page in viewport-sized steps, trigger the
+    // same hover states at each step, and merge the results from every pass.
+    const scanPositions = await page.evaluate(() => {
+      const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const step = Math.max(420, Math.round(window.innerHeight * 0.82));
+      const positions = [];
+      for (let y = 0; y <= max && positions.length < 10; y += step) positions.push(y);
+      if (!positions.includes(max)) positions.push(max);
+      return positions;
+    }).catch(() => [0]);
 
     const items = [];
-    for (const frame of page.frames()) {
-      try {
-        const result = await frame.evaluate(frameScript);
-        result.items.forEach((item) => items.push({ ...item, frameUrl: frame.url() }));
-      } catch (_) { /* cross-origin or closed frame */ }
+    for (const scrollY of scanPositions) {
+      await page.evaluate((y) => window.scrollTo(0, y), scrollY).catch(() => {});
+      await page.waitForTimeout(230);
+
+      const points = await page.evaluate(hoverCandidates).catch(() => []);
+      for (const point of points.slice(0, 10)) {
+        await page.mouse.move(point.x, point.y).catch(() => {});
+        await page.waitForTimeout(35);
+      }
+      await page.waitForTimeout(100);
+
+      for (const frame of page.frames()) {
+        try {
+          const result = await frame.evaluate(frameScript);
+          result.items.forEach((item) => items.push({ ...item, frameUrl: frame.url() }));
+        } catch (_) { /* cross-origin or closed frame */ }
+      }
     }
+
+    await page.evaluate(() => window.scrollTo(0, 0)).catch(() => {});
 
     const unique = items.filter((item, index, all) => index === all.findIndex((candidate) =>
       candidate.src === item.src && candidate.frameUrl === item.frameUrl &&

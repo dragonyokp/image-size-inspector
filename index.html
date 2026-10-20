@@ -160,7 +160,11 @@
       const source = esc(item.previewSrc || item.src || '');
       if (!source) return '<div class="broken">ไม่มีตัวอย่างให้แสดง</div>';
       const alt = esc(item.alt || `รูปภาพลำดับที่ ${index + 1}`);
-      if (item.kind === 'video' && !item.previewSrc) return `<video src="${source}" muted controls preload="metadata"></video>`;
+      if (item.kind === 'video') {
+        const videoSource = esc(item.src || '');
+        const poster = item.previewSrc ? ` poster="${source}"` : '';
+        return `<video src="${videoSource}"${poster} muted controls preload="metadata"></video>`;
+      }
       return `<img src="${source}" alt="${alt}" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'broken',textContent:'ไม่สามารถแสดงตัวอย่างได้'}))">`;
     }
 
@@ -179,7 +183,10 @@
     function render(data) {
       const profile = selectedProfile();
       const viewportBucket = bucket(data.viewport.width);
-      const items = (data.items || []).filter((item) => item.visible !== false && item.kind !== 'background' && item.src);
+      // CSS background images are real visual assets too (tiles, cards, hero
+      // panels and carousel slides), so keep them in the report instead of
+      // silently dropping them here.
+      const items = (data.items || []).filter((item) => item.visible !== false && item.src);
       const records = items.map((item) => ({ item, rule: ruleFor(item, profile), viewportBucket }));
       totalCount.textContent = records.length;
       const profileText = profile ? ` · ${profile.name}` : '';

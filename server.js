@@ -179,8 +179,21 @@ app.post('/api/scan', async (req, res) => {
     const browser = await getBrowser();
     context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
     const page = await context.newPage();
-    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(850);
+    page.setDefaultTimeout(8000);
+
+    // Do not wait for every font, video, analytics request, or websocket on a heavy site.
+    // The report only needs the rendered DOM and image/video metadata.
+    await page.route('**/*', (route) => {
+      const type = route.request().resourceType();
+      if (['font', 'media', 'websocket'].includes(type)) return route.abort();
+      return route.continue();
+    });
+
+    // Render's public request window is short. Start at navigation commit, then allow
+    // the first screen to settle briefly instead of waiting for every site request.
+    await page.goto(url, { waitUntil: 'commit', timeout: 12000 }).catch(() => {});
+    await page.waitForLoadState('domcontentloaded', { timeout: 7000 }).catch(() => {});
+    await page.waitForTimeout(800);
 
     // Scroll once to trigger lazy images, then return to the top for the report screenshot.
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)).catch(() => {});

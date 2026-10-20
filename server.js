@@ -248,6 +248,28 @@ app.post('/api/scan', async (req, res) => {
     await page.waitForLoadState('domcontentloaded', { timeout: 4500 }).catch(() => {});
     await page.waitForTimeout(450);
 
+    // Several supported sites render their cards after DOMContentLoaded (Vue,
+    // Swiper and lazy sections are common examples). Wait until the asset/size
+    // signature stops changing, but cap this at a short bounded window so a
+    // broken third-party script cannot hold the report forever.
+    let previousSignature = '';
+    let stablePasses = 0;
+    for (let pass = 0; pass < 8 && stablePasses < 2; pass += 1) {
+      const signature = await page.evaluate(() => {
+        const imageSources = [...document.images].slice(0, 24).map((element) => element.currentSrc || element.src || '').join('|');
+        const videoCount = document.querySelectorAll('video').length;
+        const backgroundSources = [...document.querySelectorAll('*')]
+          .map((element) => getComputedStyle(element).backgroundImage || '')
+          .filter((value) => value.includes('url('))
+          .slice(0, 24)
+          .join('|');
+        return [document.readyState, document.documentElement.scrollHeight, imageSources, videoCount, backgroundSources].join('::');
+      }).catch(() => '');
+      stablePasses = signature && signature === previousSignature ? stablePasses + 1 : 0;
+      previousSignature = signature;
+      if (stablePasses < 2) await page.waitForTimeout(180);
+    }
+
     // A single DOM snapshot misses lazy-loaded cards, carousel slides and CSS
     // backgrounds. Walk through the page in viewport-sized steps, trigger the
     // same hover states at each step, and merge the results from every pass.
